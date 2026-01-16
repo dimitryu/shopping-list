@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperList - Google Drive</title>
+    <style>
+        /* עיצוב זהה לגרסאות הקודמות */
+        :root {
+            --primary-color: #4285F4; /* צבע כחול של גוגל */
+            --secondary-color: #3367D6;
+            --text-color: #333;
+            --bg-color: #f4f4f9;
+            --category-bg: #e8f0fe;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 600px; background: white; min-height: 100vh; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; position: relative; }
+        header { background-color: var(--primary-color); color: white; padding: 1rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        
+        /* כפתור התחברות לגוגל */
+        #auth-btn {
+            background: white; color: #444; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;
+        }
+        #auth-btn img { width: 18px; }
+        .hidden { display: none !important; }
+        
+        .content { padding: 15px; flex: 1; padding-bottom: 100px; }
+        .tabs { display: flex; background: #e0e0e0; position: sticky; top: 0; z-index: 10; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; }
+        .tab.active { background: white; border-bottom: 3px solid var(--secondary-color); color: var(--secondary-color); }
+        
+        ul { list-style: none; padding: 0; margin: 0; }
+        .item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .item-content { display: flex; align-items: center; flex: 1; cursor: pointer; }
+        .checkbox { width: 20px; height: 20px; border: 2px solid var(--primary-color); border-radius: 50%; margin-left: 10px; }
+        .checkbox.checked { background-color: var(--primary-color); }
+        .category-header { background-color: var(--category-bg); color: var(--secondary-color); padding: 8px; margin-top: 15px; border-radius: 5px; font-weight: bold; }
+        .fab-btn { position: fixed; bottom: 25px; left: 25px; width: 60px; height: 60px; background: var(--primary-color); color: white; border-radius: 50%; border: none; font-size: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
+        .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;}
+        .modal-btn { width: 100%; padding: 10px; margin-top: 5px; cursor: pointer; border: none; border-radius: 5px; color: white; font-weight: bold; }
+        .save-btn { background: var(--primary-color); }
+        .cancel-btn { background: #999; }
+        .delete-btn { background: #e74c3c; margin-bottom: 5px;}
+        
+        .loading-msg { color: #fff; font-size: 0.8rem; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h2>🛒 SuperList Drive</h2>
+        <button id="auth-btn" onclick="handleAuthClick()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G">
+            התחבר עם Google
+        </button>
+        <button id="signout-btn" onclick="handleSignoutClick()" class="hidden" style="background:none; border:1px solid white; color:white; cursor:pointer; padding:5px; font-size:12px; margin-top:5px;">התנתק</button>
+        <div id="status-msg" class="loading-msg"></div>
+    </header>
+
+    <div id="app-content" class="hidden">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('catalog')">🏠 תכנון</div>
+            <div class="tab" onclick="switchTab('shopping')">🏃 קניה</div>
+        </div>
+
+        <div id="view-catalog" class="content">
+            <div id="catalog-list-container"></div>
+        </div>
+
+        <div id="view-shopping" class="content hidden">
+            <div id="shopping-list-container"></div>
+            <button onclick="finishShopping()" style="width:100%; padding:15px; background:#333; color:white; border:none; margin-top:20px; border-radius:8px; cursor:pointer;">סיימתי קניות</button>
+        </div>
+        
+        <button class="fab-btn" onclick="openAddModal()">+</button>
+    </div>
+</div>
+
+<div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <h3 id="modal-title">מוצר</h3>
+        <input type="text" id="modal-name-input" placeholder="שם המוצר">
+        <select id="modal-category-input">
+            <option value="כללי">כללי</option>
+            <option value="ירקות ופירות">ירקות ופירות</option>
+            <option value="מוצרי חלב וביצים">חלב וביצים</option>
+            <option value="לחם ומאפים">לחם ומאפים</option>
+            <option value="בשר ודגים">בשר ודגים</option>
+            <option value="ניקיון ובית">ניקיון ובית</option>
+        </select>
+        <button class="modal-btn delete-btn hidden" id="modal-delete-btn" onclick="deleteItem()">מחק</button>
+        <button class="modal-btn save-btn" onclick="handleModalSave()">שמור</button>
+        <button class="modal-btn cancel-btn" onclick="closeModal()">ביטול</button>
+    </div>
+</div>
+
+<script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+<script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+<script>
+    // --- הגדרות משתמש (חובה לשנות!) ---
+    const CLIENT_ID = '259426164274-8vbv26e89kerdjv4q4gc612rht8sqng9.apps.googleusercontent.com'; // להחליף!
+    const API_KEY = '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'; // להחליף!
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file'; // הרשאה לקבצים שהאפליקציה יצרה בלבד
+
+    // שמות הקובץ בדרייב
+    const FILE_NAME = 'superlist_data.json';
+    
+    let tokenClient;
+    let gapiInited = false;
+    let gisInited = false;
+    let driveFileId = null; // נשמור את ה-ID של הקובץ כאן
+    let products = []; // הנתונים המקומיים
+
+    // אלמנטים ב-DOM
+    const authBtn = document.getElementById('auth-btn');
+    const signoutBtn = document.getElementById('signout-btn');
+    const appContent = document.getElementById('app-content');
+    const statusMsg = document.getElementById('status-msg');
+
+    // --- אתחול גוגל ---
+    function gapiLoaded() {
+        gapi.load('client', async () => {
+            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+            gapiInited = true;
+            checkAuth();
+        });
+    }
+
+    function gisLoaded() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: '', // מוגדר בזמן הלחיצה
+        });
+        gisInited = true;
+        checkAuth();
+    }
+
+    function checkAuth() {
+        if (gapiInited && gisInited) {
+            authBtn.style.display = 'flex'; // אפשר להתחבר
+        }
+    }
+
+    function handleAuthClick() {
+        tokenClient.callback = async (resp) => {
+            if (resp.error) throw resp;
+            showApp();
+            await findOrCreateFile(); // חיפוש הקובץ בדרייב
+        };
+        
+        // אם יש טוקן קיים, דלג על אישור מחדש
+        if (gapi.client.getToken() === null) {
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        } else {
+            tokenClient.requestAccessToken({prompt: ''});
+        }
+    }
+
+    function handleSignoutClick() {
+        const token = gapi.client.getToken();
+        if (token !== null) {
+            google.accounts.oauth2.revoke(token.access_token);
+            gapi.client.setToken('');
+            appContent.classList.add('hidden');
+            authBtn.classList.remove('hidden');
+            signoutBtn.classList.add('hidden');
+            statusMsg.innerText = '';
+            products = [];
+        }
+    }
+
+    function showApp() {
+        authBtn.classList.add('hidden');
+        signoutBtn.classList.remove('hidden');
+        appContent.classList.remove('hidden');
+    }
+
+    // --- לוגיקה מול Google Drive ---
+
+    async function findOrCreateFile() {
+        statusMsg.innerText = 'מחפש קובץ ב-Drive...';
+        try {
+            // 1. חיפוש קובץ לפי שם (שלא נמחק)
+            const response = await gapi.client.drive.files.list({
+                q: `name = '${FILE_NAME}' and trashed = false`,
+                fields: 'files(id, name)',
+                spaces: 'drive'
+            });
+
+            const files = response.result.files;
+            if (files && files.length > 0) {
+                // נמצא קובץ קיים
+                driveFileId = files[0].id;
+                statusMsg.innerText = 'קובץ נמצא, טוען נתונים...';
+                await loadFileContent();
+            } else {
+                // לא נמצא - יוצרים חדש
+                statusMsg.innerText = 'יוצר קובץ חדש...';
+                await createNewFile();
+            }
+        } catch (err) {
+            console.error(err);
+            statusMsg.innerText = 'שגיאה בגישה לדרייב';
+        }
+    }
+
+    async function createNewFile() {
+        const initialData = JSON.stringify([]); // רשימה ריקה
+        const metadata = {
+            name: FILE_NAME,
+            mimeType: 'application/json'
+        };
+
+        // יצירת קובץ באמצעות Multipart upload (כדי להכניס תוכן ראשוני)
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', new Blob([initialData], { type: 'application/json' }));
+
+        const accessToken = gapi.client.getToken().access_token;
+        
+        const fetchResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+            body: form
+        });
+        
+        const file = await fetchResponse.json();
+        driveFileId = file.id;
+        products = [];
+        renderCatalog();
+        statusMsg.innerText = 'מוכן לעבודה ✅';
+    }
+
+    async function loadFileContent() {
+        try {
+            const response = await gapi.client.drive.files.get({
+                fileId: driveFileId,
+                alt: 'media' // מוריד את תוכן הקובץ
+            });
+            
+            // אם הקובץ ריק או לא תקין, נאתחל
+            products = response.result || [];
+            if (typeof products !== 'object') products = []; // הגנה
+            
+            renderCatalog();
+            statusMsg.innerText = 'סונכרן עם הדרייב ✅';
+        } catch (err) {
+            console.error(err);
+            statusMsg.innerText = 'שגיאה בקריאת הקובץ';
+        }
+    }
+
+    async function saveToDrive() {
+        if (!driveFileId) return;
+        statusMsg.innerText = 'שומר... ⏳';
+
+        const content = JSON.stringify(products);
+        
+        // עדכון תוכן קובץ קיים
+        const accessToken = gapi.client.getToken().access_token;
+        
+        try {
+            await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+                method: 'PATCH',
+                headers: new Headers({ 
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json'
+                }),
+                body: content
+            });
+            statusMsg.innerText = 'נשמר ✅';
+        } catch (err) {
+            console.error('Error saving', err);
+            statusMsg.innerText = 'שגיאה בשמירה ❌';
+        }
+    }
+
+    // --- לוגיקה של האפליקציה (זהה לקודם) ---
+    // ההבדל היחיד: במקום לשמור ל-localStorage, קוראים ל-saveToDrive()
+
+    const CATEGORIES = ["ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "ניקיון ובית", "כללי"];
+
+    function switchTab(tab) {
+        document.getElementById('view-catalog').classList.add('hidden');
+        document.getElementById('view-shopping').classList.add('hidden');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        if(tab === 'catalog') {
+            document.getElementById('view-catalog').classList.remove('hidden');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            renderCatalog();
+        } else {
+            document.getElementById('view-shopping').classList.remove('hidden');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            renderShoppingList();
+        }
+    }
+
+    function renderCatalog() {
+        const container = document.getElementById('catalog-list-container');
+        container.innerHTML = '';
+        
+        const groups = {};
+        CATEGORIES.forEach(c => groups[c] = []);
+        products.forEach(p => {
+            const cat = p.category || 'כללי';
+            if(!groups[cat]) groups[cat] = [];
+            groups[cat].push(p);
+        });
+
+        CATEGORIES.forEach(cat => {
+            if(groups[cat].length > 0) {
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.innerText = cat;
+                container.appendChild(header);
+                
+                groups[cat].forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `
+                        <div class="item-content" onclick="toggleSelect(${p.id})">
+                            <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
+                            <span style="margin-right:10px">${p.name}</span>
+                        </div>
+                        <button onclick="openEditModal(${p.id})" style="border:none; background:none; cursor:pointer;">✎</button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        });
+    }
+
+    function renderShoppingList() {
+        const container = document.getElementById('shopping-list-container');
+        container.innerHTML = '';
+        const list = products.filter(p => p.isSelected);
+        
+        if(list.length === 0) container.innerHTML = '<p style="text-align:center; color:#888;">אין פריטים לקניה</p>';
+
+        list.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.style.opacity = p.isBought ? '0.5' : '1';
+            div.style.textDecoration = p.isBought ? 'line-through' : 'none';
+            div.innerHTML = `
+                <div class="item-content" onclick="toggleBought(${p.id})">
+                    <div class="checkbox ${p.isBought ? 'checked' : ''}"></div>
+                    <span style="margin-right:10px">${p.name}</span>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function toggleSelect(id) {
+        const p = products.find(x => x.id === id);
+        if(p) { p.isSelected = !p.isSelected; if(!p.isSelected) p.isBought = false; saveToDrive(); renderCatalog(); }
+    }
+
+    function toggleBought(id) {
+        const p = products.find(x => x.id === id);
+        if(p) { p.isBought = !p.isBought; saveToDrive(); renderShoppingList(); }
+    }
+
+    // ניהול מודלים
+    let currentEditId = null;
+    function openAddModal() { currentEditId = null; document.getElementById('modal-name-input').value = ''; document.getElementById('modal-delete-btn').classList.add('hidden'); document.getElementById('edit-modal').classList.remove('hidden'); }
+    function openEditModal(id) { 
+        const p = products.find(x => x.id === id);
+        if(!p) return;
+        currentEditId = id; 
+        document.getElementById('modal-name-input').value = p.name;
+        document.getElementById('modal-category-input').value = p.category;
+        document.getElementById('modal-delete-btn').classList.remove('hidden'); 
+        document.getElementById('edit-modal').classList.remove('hidden'); 
+    }
+    function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    function handleModalSave() {
+        const name = document.getElementById('modal-name-input').value;
+        const cat = document.getElementById('modal-category-input').value;
+        if(!name) return;
+
+        if(currentEditId) {
+            const p = products.find(x => x.id === currentEditId);
+            p.name = name; p.category = cat;
+        } else {
+            products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false });
+        }
+        saveToDrive();
+        closeModal();
+        renderCatalog();
+    }
+
+    function deleteItem() {
+        if(currentEditId) {
+            products = products.filter(x => x.id !== currentEditId);
+            saveToDrive();
+            closeModal();
+            renderCatalog();
+        }
+    }
+
+    function finishShopping() {
+        if(confirm('לנקות את הרשימה?')) {
+            products.forEach(p => { p.isSelected = false; p.isBought = false; });
+            saveToDrive();
+            switchTab('catalog');
+        }
+    }
+</script>
+</body>
+</html>
