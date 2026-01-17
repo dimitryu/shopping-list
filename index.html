@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 2.5</title>
+    <title>SuperList Pro 3.0</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -14,28 +14,35 @@
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
             --cart-header-bg: #e0e0e0;
+            --star-color: #f1c40f;
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 600px; background: var(--card-bg); min-height: 100vh; box-shadow: 0 0 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
         
+        /* Header Improvements */
         header { background-color: var(--primary-color); color: white; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .header-top { display: flex; justify-content: space-between; width: 100%; align-items: center; }
-        .header-title { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .header-title { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 8px; flex: 1; }
+        
+        .header-actions { display: flex; gap: 10px; }
+        
+        .icon-btn { background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .icon-btn:active { background: rgba(255,255,255,0.4); }
         
         #auth-btn { background: white; color: #444; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .refresh-btn { background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        
+
         .hidden { display: none !important; }
-        .content { padding: 15px; flex: 1; padding-bottom: 100px; }
+        .content { padding: 15px; flex: 1; padding-bottom: 50px; }
         
+        /* Tabs */
         .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; }
+        .tab { flex: 1; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.95rem; }
         .tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); background: #f8faff; }
         
+        /* Items */
         .item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; }
         .item:active { background-color: #f5f5f5; }
-        
         .item-main { display: flex; align-items: center; flex: 1; cursor: pointer; gap: 12px; }
         
         /* Checkbox Customization */
@@ -43,16 +50,14 @@
         .checkbox.checked { background-color: var(--success-color); border-color: var(--success-color); }
         .checkbox.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
         
+        /* Star Checkbox for Base List */
+        .star-check { width: 24px; height: 24px; font-size: 24px; color: #ddd; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .star-check.active { color: var(--star-color); }
+
         /* Quantity Controls */
         .qty-control { display: flex; align-items: center; background: #f0f2f5; border-radius: 8px; padding: 2px; margin-left: 10px; }
         .qty-btn { width: 28px; height: 28px; border: none; background: white; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        
-        /* Manual Input Style */
-        .qty-input-manual { 
-            width: 50px; text-align: center; font-size: 14px; font-weight: 600; 
-            margin: 0 2px; border: none; background: transparent; outline: none; 
-            color: #333; font-family: inherit;
-        }
+        .qty-input-manual { width: 50px; text-align: center; font-size: 14px; font-weight: 600; margin: 0 2px; border: none; background: transparent; outline: none; color: #333; font-family: inherit; }
         .qty-input-manual:focus { background: #fff; border-radius: 4px; box-shadow: 0 0 0 1px var(--primary-color) inset; }
         
         /* Shopping Mode Styles */
@@ -62,17 +67,15 @@
         .item.bought .qty-control { opacity: 0.5; pointer-events: none; }
 
         .category-header { background-color: #e8f0fe; color: var(--primary-color); padding: 8px 12px; margin-top: 20px; margin-bottom: 5px; border-radius: 8px; font-weight: bold; font-size: 0.9em; letter-spacing: 0.5px; }
-        
-        /* סגנון לקטגוריית העגלה */
         .cart-header { background-color: var(--cart-header-bg); color: #555; }
 
-        .fab-btn { position: fixed; bottom: 30px; left: 30px; width: 60px; height: 60px; background: var(--primary-color); color: white; border-radius: 50%; border: none; font-size: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4); transition: transform 0.2s; z-index: 99; }
-        .fab-btn:active { transform: scale(0.95); }
-
-        .actions-bar { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        /* Buttons */
+        .actions-bar { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;}
         .action-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        
         .btn-clear-bought { background-color: #ffebee; color: var(--danger-color); }
         .btn-clear-all { background-color: #eee; color: #666; font-size: 14px; padding: 10px;}
+        .btn-add-base { background-color: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
 
         /* Modal */
         .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
@@ -94,7 +97,11 @@
     <header>
         <div class="header-top">
             <div class="header-title">🛒 SuperList Pro</div>
-            <button class="refresh-btn" onclick="syncNow()" title="רענן נתונים">🔄</button>
+            
+            <div class="header-actions">
+                <button class="icon-btn" onclick="openAddModal()" title="הוסף מוצר חדש">➕</button>
+                <button class="icon-btn" onclick="syncNow()" title="רענן נתונים">🔄</button>
+            </div>
         </div>
         
         <button id="auth-btn" onclick="handleAuthClick()">
@@ -107,8 +114,19 @@
 
     <div id="app-content" class="hidden">
         <div class="tabs">
+            <div class="tab" onclick="switchTab('base')">⭐ קבועים</div>
             <div class="tab active" onclick="switchTab('catalog')">🏠 תכנון</div>
-            <div class="tab" onclick="switchTab('shopping')">🏃 קניה בסופר</div>
+            <div class="tab" onclick="switchTab('shopping')">🏃 קניה</div>
+        </div>
+
+        <div id="view-base" class="content hidden">
+            <div class="actions-bar">
+                <button class="action-btn btn-add-base" onclick="addBaseToPlan()">
+                    📥 הכנס רשימה התחלתית לתכנון
+                </button>
+            </div>
+            <p style="text-align:center; color:#888; font-size:0.9em;">סמן בכוכב מוצרים שאתה קונה באופן קבוע</p>
+            <div id="base-list-container"></div>
         </div>
 
         <div id="view-catalog" class="content">
@@ -127,8 +145,6 @@
                 </button>
             </div>
         </div>
-        
-        <button class="fab-btn" onclick="openAddModal()">+</button>
     </div>
 </div>
 
@@ -161,6 +177,7 @@
     const CLIENT_ID = '259426164274-8vbv26e89kerdjv4q4gc612rht8sqng9.apps.googleusercontent.com'; // להחליף
     const API_KEY = 'AIzaSyB9PVroJWU0ynWjfVMa_0iWYZWd0JLTboM'; // להחליף
     // ==========================================
+
 
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -277,7 +294,13 @@
             const response = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
             products = response.result || [];
             if (typeof products !== 'object') products = [];
-            products.forEach(p => { if(!p.qty) p.qty = 1; });
+            
+            // תמיכה בשדות חדשים (isBase)
+            products.forEach(p => { 
+                if(!p.qty) p.qty = 1;
+                if(p.isBase === undefined) p.isBase = false;
+            });
+
             refreshView();
             document.getElementById('status-msg').innerText = 'מעודכן ✅';
         } catch (err) {
@@ -312,32 +335,74 @@
     const CATEGORIES = ["ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", "ניקיון ובית", "כללי"];
 
     function refreshView() {
-        const isShopping = document.querySelectorAll('.tab')[1].classList.contains('active');
-        if(isShopping) renderShoppingList(); else renderCatalog();
+        // מזהה איזה טאב פעיל ומרענן אותו
+        const activeTab = document.querySelector('.tab.active').innerText;
+        if(activeTab.includes('קניה')) renderShoppingList();
+        else if(activeTab.includes('תכנון')) renderCatalog();
+        else renderBaseList();
     }
 
     function switchTab(tab) {
         document.getElementById('view-catalog').classList.add('hidden');
         document.getElementById('view-shopping').classList.add('hidden');
+        document.getElementById('view-base').classList.add('hidden');
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         
         if(tab === 'catalog') {
             document.getElementById('view-catalog').classList.remove('hidden');
-            document.querySelectorAll('.tab')[0].classList.add('active');
-            renderCatalog();
-        } else {
-            document.getElementById('view-shopping').classList.remove('hidden');
             document.querySelectorAll('.tab')[1].classList.add('active');
+            renderCatalog();
+        } else if (tab === 'shopping') {
+            document.getElementById('view-shopping').classList.remove('hidden');
+            document.querySelectorAll('.tab')[2].classList.add('active');
             renderShoppingList();
+        } else {
+            document.getElementById('view-base').classList.remove('hidden');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            renderBaseList();
         }
+    }
+
+    function renderBaseList() {
+        const container = document.getElementById('base-list-container');
+        container.innerHTML = '';
+        renderGroupedList(container, products, (p) => {
+            return `
+                <div class="item-main" onclick="toggleBase(${p.id})">
+                    <div class="star-check ${p.isBase ? 'active' : ''}">★</div>
+                    <span>${p.name}</span>
+                </div>
+                <button onclick="openEditModal(${p.id})" style="border:none; background:none; cursor:pointer; font-size:18px; color:#ccc; margin-right:5px;">✎</button>
+            `;
+        });
     }
 
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
+        renderGroupedList(container, products, (p) => {
+            // Sort logic handled in generic function? No, specific sort here
+            return `
+                <div class="item-main" onclick="toggleSelect(${p.id})">
+                    <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
+                    <span>${p.name}</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                     <div class="qty-control" onclick="event.stopPropagation()">
+                        <button class="qty-btn" onclick="updateQty(${p.id}, -1)">-</button>
+                        <input type="text" class="qty-input-manual" value="${p.qty || 1}" onchange="updateQtyManual(${p.id}, this.value)">
+                        <button class="qty-btn" onclick="updateQty(${p.id}, 1)">+</button>
+                    </div>
+                    <button onclick="openEditModal(${p.id})" style="border:none; background:none; cursor:pointer; font-size:18px; color:#ccc; margin-right:5px;">✎</button>
+                </div>
+            `;
+        });
+    }
+
+    function renderGroupedList(container, itemList, itemTemplateFunc) {
         const groups = {};
         CATEGORIES.forEach(c => groups[c] = []);
-        products.forEach(p => {
+        itemList.forEach(p => {
             const cat = p.category || 'כללי';
             if(!groups[cat]) groups[cat] = [];
             groups[cat].push(p);
@@ -350,29 +415,13 @@
                 header.innerText = cat;
                 container.appendChild(header);
                 
-                // Sort 1: Is Selected? Sort 2: Alphabetical
-                groups[cat].sort((a,b) => {
-                    if (a.isSelected !== b.isSelected) return a.isSelected ? -1 : 1;
-                    return a.name.localeCompare(b.name, 'he'); // א-ב בעברית
-                });
+                // Sort by Name
+                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
 
                 groups[cat].forEach(p => {
                     const div = document.createElement('div');
                     div.className = 'item';
-                    div.innerHTML = `
-                        <div class="item-main" onclick="toggleSelect(${p.id})">
-                            <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
-                            <span>${p.name}</span>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                             <div class="qty-control" onclick="event.stopPropagation()">
-                                <button class="qty-btn" onclick="updateQty(${p.id}, -1)">-</button>
-                                <input type="text" class="qty-input-manual" value="${p.qty || 1}" onchange="updateQtyManual(${p.id}, this.value)">
-                                <button class="qty-btn" onclick="updateQty(${p.id}, 1)">+</button>
-                            </div>
-                            <button onclick="openEditModal(${p.id})" style="border:none; background:none; cursor:pointer; font-size:18px; color:#ccc; margin-right:5px;">✎</button>
-                        </div>
-                    `;
+                    div.innerHTML = itemTemplateFunc(p);
                     container.appendChild(div);
                 });
             }
@@ -391,7 +440,7 @@
             return;
         }
 
-        // 1. Render items TO BUY (grouped by category)
+        // 1. Render items TO BUY
         const groups = {}; 
         activeItems.forEach(p => {
             const cat = p.category || 'כללי';
@@ -406,43 +455,49 @@
                 header.innerText = cat;
                 container.appendChild(header);
                 
-                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he')); // Sort Active by Name
+                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
 
                 groups[cat].forEach(p => {
-                    renderShoppingItem(container, p);
+                    const div = document.createElement('div');
+                    div.className = `item`;
+                    div.innerHTML = `
+                        <div class="item-main" onclick="toggleBought(${p.id})">
+                            <div class="checkbox"></div>
+                            <span>${p.name}</span>
+                        </div>
+                        <div class="qty-control" style="background:transparent;">
+                            <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
+                        </div>
+                    `;
+                    container.appendChild(div);
                 });
             }
         });
 
-        // 2. Render BOUGHT items (Unified Category at bottom)
+        // 2. Render BOUGHT items
         if (boughtItems.length > 0) {
             const cartHeader = document.createElement('div');
             cartHeader.className = 'category-header cart-header';
             cartHeader.innerText = '🛒 מוצרים בעגלה';
             container.appendChild(cartHeader);
             
-            // Sort Bought items alphabetically
             boughtItems.sort((a,b) => a.name.localeCompare(b.name, 'he'));
 
             boughtItems.forEach(p => {
-                renderShoppingItem(container, p);
+                const div = document.createElement('div');
+                div.className = `item bought`;
+                div.innerHTML = `
+                    <div class="item-main" onclick="toggleBought(${p.id})">
+                        <div class="checkbox checked"></div>
+                        <span>${p.name}</span>
+                    </div>
+                    <div class="qty-control" style="background:transparent;">
+                        <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
+                    </div>
+                `;
+                container.appendChild(div);
             });
         }
-    }
-
-    function renderShoppingItem(container, p) {
-        const div = document.createElement('div');
-        div.className = `item ${p.isBought ? 'bought' : ''}`;
-        div.innerHTML = `
-            <div class="item-main" onclick="toggleBought(${p.id})">
-                <div class="checkbox ${p.isBought ? 'checked' : ''}"></div>
-                <span>${p.name}</span>
-            </div>
-            <div class="qty-control" style="background:transparent;">
-                <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
-            </div>
-        `;
-        container.appendChild(div);
     }
 
     // --- Actions ---
@@ -454,6 +509,33 @@
             if(!p.isSelected) p.isBought = false; 
             saveToDrive(); 
             refreshView(); 
+        }
+    }
+
+    function toggleBase(id) {
+        const p = products.find(x => x.id === id);
+        if(p) {
+            p.isBase = !p.isBase;
+            saveToDrive();
+            refreshView();
+        }
+    }
+
+    function addBaseToPlan() {
+        let count = 0;
+        products.forEach(p => {
+            if (p.isBase && !p.isSelected) {
+                p.isSelected = true;
+                count++;
+            }
+        });
+        
+        if (count > 0) {
+            saveToDrive();
+            alert('הוספו ' + count + ' מוצרים לרשימת התכנון');
+            switchTab('catalog');
+        } else {
+            alert('כל המוצרים הקבועים כבר נמצאים בתכנון');
         }
     }
 
@@ -470,7 +552,7 @@
         const p = products.find(x => x.id === id);
         if(p) {
             let currentVal = parseFloat(p.qty);
-            if(isNaN(currentVal)) currentVal = 1; // If text, reset to 1 on button click
+            if(isNaN(currentVal)) currentVal = 1;
             let newQty = currentVal + change;
             if(newQty < 1) newQty = 1;
             p.qty = newQty;
@@ -482,7 +564,7 @@
     function updateQtyManual(id, val) {
         const p = products.find(x => x.id === id);
         if(p) {
-            p.qty = val; // Save string or number
+            p.qty = val;
             saveToDrive();
         }
     }
@@ -519,7 +601,9 @@
             p.name = name; p.category = cat;
         } else {
             if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
-            products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false, qty: 1 });
+            // מוצר חדש מתווסף אוטומטית כנבחר וכבסיס אם מוסיפים אותו מהטאב המתאים?
+            // כרגע: מתווסף וזהו. המשתמש יחליט.
+            products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false, qty: 1, isBase: false });
         }
         saveToDrive();
         closeModal();
@@ -545,7 +629,6 @@
                 changed = true;
             }
         });
-        
         if(changed) {
             saveToDrive();
             switchTab('catalog');
