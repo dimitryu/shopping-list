@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 3.1</title>
+    <title>SuperList Pro 3.2</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -15,36 +15,55 @@
             --card-bg: #ffffff;
             --cart-header-bg: #e0e0e0;
             --star-color: #f1c40f;
+            --header-bg: #4285F4;
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 600px; background: var(--card-bg); min-height: 100vh; box-shadow: 0 0 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
         
-        /* Header Improvements */
-        header { background-color: var(--primary-color); color: white; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header-top { display: flex; justify-content: space-between; width: 100%; align-items: center; }
-        .header-title { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 8px; flex: 1; }
+        /* --- Sticky Header Container --- */
+        .sticky-header-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Header Styling - Compact */
+        header { 
+            background-color: var(--header-bg); 
+            color: white; 
+            padding: 0.5rem 1rem; /* הקטנת מרווחים */
+            display: flex; 
+            flex-direction: row; /* סידור בשורה אחת */
+            align-items: center; 
+            justify-content: space-between;
+            gap: 10px; 
+        }
+
+        .header-title-area { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .header-title { font-size: 1.1rem; font-weight: bold; white-space: nowrap; }
         
-        .header-actions { display: flex; gap: 10px; }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
         
-        .icon-btn { background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .icon-btn { background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .icon-btn:active { background: rgba(255,255,255,0.4); }
         
-        /* Google Button Fix */
-        #auth-btn { background: white; color: #444; border: none; padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s; }
-        #auth-btn:active { transform: scale(0.98); }
-        #auth-btn img { display: block; }
+        /* Google Button Compact */
+        #auth-btn { background: white; color: #444; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        #auth-btn img, #auth-btn svg { display: block; width: 16px; height: 16px; }
 
         .hidden { display: none !important; }
         .content { padding: 15px; flex: 1; padding-bottom: 50px; }
         
-        /* Tabs */
-        .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
-        .tab { flex: 1; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.95rem; }
+        /* Tabs - Now part of sticky container */
+        .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; }
+        .tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.9rem; }
         .tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); background: #f8faff; }
         
         /* Items */
-        .item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; }
+        .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; background: white; }
         .item:active { background-color: #f5f5f5; }
         .item-main { display: flex; align-items: center; flex: 1; cursor: pointer; gap: 12px; }
         
@@ -53,15 +72,14 @@
         .checkbox.checked { background-color: var(--success-color); border-color: var(--success-color); }
         .checkbox.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
         
-        /* Star Checkbox for Base List */
+        /* Star Checkbox */
         .star-check { width: 24px; height: 24px; font-size: 24px; color: #ddd; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .star-check.active { color: var(--star-color); }
 
         /* Quantity Controls */
         .qty-control { display: flex; align-items: center; background: #f0f2f5; border-radius: 8px; padding: 2px; margin-left: 10px; }
-        .qty-btn { width: 28px; height: 28px; border: none; background: white; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .qty-input-manual { width: 50px; text-align: center; font-size: 14px; font-weight: 600; margin: 0 2px; border: none; background: transparent; outline: none; color: #333; font-family: inherit; }
-        .qty-input-manual:focus { background: #fff; border-radius: 4px; box-shadow: 0 0 0 1px var(--primary-color) inset; }
+        .qty-btn { width: 26px; height: 26px; border: none; background: white; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .qty-input-manual { width: 40px; text-align: center; font-size: 14px; font-weight: 600; margin: 0 2px; border: none; background: transparent; outline: none; color: #333; font-family: inherit; }
         
         /* Shopping Mode Styles */
         .item.bought { background-color: #fafafa; }
@@ -69,7 +87,27 @@
         .item.bought .checkbox { background-color: #ddd; border-color: #ddd; }
         .item.bought .qty-control { opacity: 0.5; pointer-events: none; }
 
-        .category-header { background-color: #e8f0fe; color: var(--primary-color); padding: 8px 12px; margin-top: 20px; margin-bottom: 5px; border-radius: 8px; font-weight: bold; font-size: 0.9em; letter-spacing: 0.5px; }
+        /* Collapsible Category Header */
+        .category-header { 
+            background-color: #e8f0fe; 
+            color: var(--primary-color); 
+            padding: 10px 12px; 
+            margin-top: 15px; 
+            margin-bottom: 5px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 0.95em; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .category-header:hover { background-color: #dbe8fc; }
+        .arrow-icon { transition: transform 0.2s; font-size: 0.8em; }
+        .arrow-icon.closed { transform: rotate(90deg); }
+        .category-items-container.closed { display: none; }
+
         .cart-header { background-color: var(--cart-header-bg); color: #555; }
 
         /* Buttons */
@@ -77,11 +115,11 @@
         .action-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         
         .btn-clear-bought { background-color: #ffebee; color: var(--danger-color); }
-        .btn-clear-all { background-color: #eee; color: #666; font-size: 14px; padding: 10px;}
+        .btn-clear-all { background-color: #333; color: #fff; font-size: 14px; padding: 12px;}
         .btn-add-base { background-color: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
 
         /* Modal */
-        .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
+        .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(2px); }
         .modal { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .modal h3 { margin-top: 0; color: #444; }
         .modal input, .modal select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
@@ -91,42 +129,47 @@
         .delete-btn { background: #ffebee; color: var(--danger-color); }
         .cancel-btn { background: transparent; color: #888; margin-top: 0; }
 
-        .status-bar { font-size: 12px; background: rgba(0,0,0,0.1); padding: 4px 10px; border-radius: 10px; color: white; }
+        .status-bar { font-size: 11px; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 10px; color: white; white-space: nowrap; margin-right: auto;}
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <header>
-        <div class="header-top">
-            <div class="header-title">🛒 SuperList Pro</div>
+    
+    <div class="sticky-header-container">
+        <header>
+            <div class="header-title-area">
+                <span style="font-size: 1.4rem;">🛒</span>
+                <div class="header-title">SuperList Pro</div>
+                <div id="status-msg" class="status-bar">ממתין...</div>
+            </div>
             
             <div class="header-actions">
+                <button id="auth-btn" onclick="handleAuthClick()">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                    </svg>
+                    התחבר
+                </button>
+                <button id="signout-btn" onclick="handleSignoutClick()" class="hidden icon-btn" title="התנתק">🛑</button>
+                
                 <button class="icon-btn" onclick="openAddModal()" title="הוסף מוצר חדש">➕</button>
                 <button class="icon-btn" onclick="syncNow()" title="רענן נתונים">🔄</button>
             </div>
-        </div>
-        
-        <button id="auth-btn" onclick="handleAuthClick()">
-            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-            </svg>
-            התחבר עם Google
-        </button>
-        <button id="signout-btn" onclick="handleSignoutClick()" class="hidden" style="background:none; border:1px solid rgba(255,255,255,0.5); color:white; cursor:pointer; padding:4px 10px; border-radius:15px; font-size:12px;">התנתק</button>
-        <div id="status-msg" class="status-bar">ממתין להתחברות...</div>
-    </header>
+        </header>
 
-    <div id="app-content" class="hidden">
         <div class="tabs">
             <div class="tab" onclick="switchTab('base')">⭐ קבועים</div>
             <div class="tab active" onclick="switchTab('catalog')">🏠 תכנון</div>
             <div class="tab" onclick="switchTab('shopping')">🏃 קניה</div>
         </div>
+    </div>
 
+    <div id="app-content" class="hidden">
+        
         <div id="view-base" class="content hidden">
             <div class="actions-bar">
                 <button class="action-btn btn-add-base" onclick="addBaseToPlan()">
@@ -141,8 +184,8 @@
             <div id="catalog-list-container"></div>
             
             <div class="actions-bar">
-                <button class="action-btn btn-clear-all" onclick="clearAllList()">
-                    ⚠️ אפס את כל הרשימה
+                <button class="action-btn btn-clear-all" onclick="clearAllData()">
+                    🧨 מחק את כל המוצרים (איפוס מלא)
                 </button>
             </div>
         </div>
@@ -154,8 +197,8 @@
                 <button class="action-btn btn-clear-bought" onclick="clearBoughtItems()">
                     🗑️ נקה מוצרים שנקנו
                 </button>
-                <button class="action-btn btn-clear-all" onclick="clearAllList()">
-                    ⚠️ אפס את כל הרשימה
+                <button class="action-btn btn-clear-all" onclick="clearAllListOnly()">
+                    ⚠️ אפס בחירות (השאר מוצרים)
                 </button>
             </div>
         </div>
@@ -187,7 +230,7 @@
 <script>
     // ==========================================
     // *** חובה למלא את הפרטים שלך כאן! ***
-    // ==========================================
+	// ==========================================
     const CLIENT_ID = '259426164274-8vbv26e89kerdjv4q4gc612rht8sqng9.apps.googleusercontent.com'; // להחליף
     const API_KEY = 'AIzaSyB9PVroJWU0ynWjfVMa_0iWYZWd0JLTboM'; // להחליף
     // ==========================================
@@ -202,6 +245,9 @@
     let gisInited = false;
     let driveFileId = null;
     let products = [];
+    
+    // ניהול מצב פתיחה/סגירה של קטגוריות
+    let categoryState = {}; // { 'dairy': true/false } - true means collapsed
 
     // --- Google Init ---
     function gapiLoaded() {
@@ -213,7 +259,7 @@
                 checkAuth();
             } catch (err) {
                 console.error('Error loading GAPI:', err);
-                document.getElementById('status-msg').innerText = 'שגיאת API - בדוק מפתחות';
+                document.getElementById('status-msg').innerText = 'שגיאת API';
             }
         });
     }
@@ -253,7 +299,7 @@
             document.getElementById('app-content').classList.add('hidden');
             document.getElementById('auth-btn').classList.remove('hidden');
             document.getElementById('signout-btn').classList.add('hidden');
-            document.getElementById('status-msg').innerText = 'ממתין להתחברות...';
+            document.getElementById('status-msg').innerText = 'ממתין...';
             products = [];
         }
     }
@@ -266,7 +312,7 @@
 
     // --- Drive Logic ---
     async function findOrCreateFile() {
-        document.getElementById('status-msg').innerText = 'מסתנכרן...';
+        document.getElementById('status-msg').innerText = 'מסנכרן...';
         try {
             const response = await gapi.client.drive.files.list({
                 q: `name = '${FILE_NAME}' and trashed = false`,
@@ -281,7 +327,7 @@
             }
         } catch (err) {
             console.error(err);
-            document.getElementById('status-msg').innerText = 'שגיאת חיבור לדרייב';
+            document.getElementById('status-msg').innerText = 'שגיאת רשת';
         }
     }
 
@@ -318,13 +364,13 @@
             document.getElementById('status-msg').innerText = 'מעודכן ✅';
         } catch (err) {
             console.error(err);
-            document.getElementById('status-msg').innerText = 'שגיאה בטעינה';
+            document.getElementById('status-msg').innerText = 'שגיאה';
         }
     }
 
     async function saveToDrive() {
         if (!driveFileId) return;
-        document.getElementById('status-msg').innerText = 'שומר... ⏳';
+        document.getElementById('status-msg').innerText = 'שומר...';
         const content = JSON.stringify(products);
         const accessToken = gapi.client.getToken().access_token;
         try {
@@ -336,7 +382,7 @@
             document.getElementById('status-msg').innerText = 'נשמר ✅';
         } catch (err) {
             console.error('Error saving', err);
-            document.getElementById('status-msg').innerText = 'שגיאה בשמירה ❌';
+            document.getElementById('status-msg').innerText = 'תקלת שמירה';
         }
     }
 
@@ -375,6 +421,53 @@
         }
     }
 
+    // --- Category Collapse Logic ---
+    function toggleCategory(categoryName) {
+        categoryState[categoryName] = !categoryState[categoryName];
+        refreshView();
+    }
+
+    function renderGroupedList(container, itemList, itemTemplateFunc) {
+        const groups = {};
+        CATEGORIES.forEach(c => groups[c] = []);
+        itemList.forEach(p => {
+            const cat = p.category || 'כללי';
+            if(!groups[cat]) groups[cat] = [];
+            groups[cat].push(p);
+        });
+
+        CATEGORIES.forEach(cat => {
+            if(groups[cat].length > 0) {
+                // Header with click event
+                const isCollapsed = categoryState[cat];
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.onclick = () => toggleCategory(cat);
+                header.innerHTML = `
+                    <span>${cat}</span>
+                    <span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>
+                `;
+                container.appendChild(header);
+                
+                // Items Container
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = `category-items-container ${isCollapsed ? 'closed' : ''}`;
+                
+                // Sort by Name
+                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
+
+                groups[cat].forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = itemTemplateFunc(p);
+                    itemsDiv.appendChild(div);
+                });
+                
+                container.appendChild(itemsDiv);
+            }
+        });
+    }
+
     function renderBaseList() {
         const container = document.getElementById('base-list-container');
         container.innerHTML = '';
@@ -410,34 +503,6 @@
         });
     }
 
-    function renderGroupedList(container, itemList, itemTemplateFunc) {
-        const groups = {};
-        CATEGORIES.forEach(c => groups[c] = []);
-        itemList.forEach(p => {
-            const cat = p.category || 'כללי';
-            if(!groups[cat]) groups[cat] = [];
-            groups[cat].push(p);
-        });
-
-        CATEGORIES.forEach(cat => {
-            if(groups[cat].length > 0) {
-                const header = document.createElement('div');
-                header.className = 'category-header';
-                header.innerText = cat;
-                container.appendChild(header);
-                
-                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
-
-                groups[cat].forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.innerHTML = itemTemplateFunc(p);
-                    container.appendChild(div);
-                });
-            }
-        });
-    }
-
     function renderShoppingList() {
         const container = document.getElementById('shopping-list-container');
         container.innerHTML = '';
@@ -460,11 +525,16 @@
 
         CATEGORIES.forEach(cat => {
             if(groups[cat] && groups[cat].length > 0) {
+                const isCollapsed = categoryState[cat];
                 const header = document.createElement('div');
                 header.className = 'category-header';
-                header.innerText = cat;
+                header.onclick = () => toggleCategory(cat);
+                header.innerHTML = `<span>${cat}</span><span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>`;
                 container.appendChild(header);
                 
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = `category-items-container ${isCollapsed ? 'closed' : ''}`;
+
                 groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
 
                 groups[cat].forEach(p => {
@@ -479,8 +549,9 @@
                             <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
                         </div>
                     `;
-                    container.appendChild(div);
+                    itemsDiv.appendChild(div);
                 });
+                container.appendChild(itemsDiv);
             }
         });
 
@@ -514,21 +585,12 @@
 
     function toggleSelect(id) {
         const p = products.find(x => x.id === id);
-        if(p) { 
-            p.isSelected = !p.isSelected; 
-            if(!p.isSelected) p.isBought = false; 
-            saveToDrive(); 
-            refreshView(); 
-        }
+        if(p) { p.isSelected = !p.isSelected; if(!p.isSelected) p.isBought = false; saveToDrive(); refreshView(); }
     }
 
     function toggleBase(id) {
         const p = products.find(x => x.id === id);
-        if(p) {
-            p.isBase = !p.isBase;
-            saveToDrive();
-            refreshView();
-        }
+        if(p) { p.isBase = !p.isBase; saveToDrive(); refreshView(); }
     }
 
     function addBaseToPlan() {
@@ -539,23 +601,18 @@
                 count++;
             }
         });
-        
         if (count > 0) {
             saveToDrive();
-            alert('הוספו ' + count + ' מוצרים לרשימת התכנון');
+            alert('הוספו ' + count + ' מוצרים');
             switchTab('catalog');
         } else {
-            alert('כל המוצרים הקבועים כבר נמצאים בתכנון');
+            alert('הכל כבר בתכנון');
         }
     }
 
     function toggleBought(id) {
         const p = products.find(x => x.id === id);
-        if(p) { 
-            p.isBought = !p.isBought; 
-            saveToDrive(); 
-            setTimeout(() => refreshView(), 200);
-        }
+        if(p) { p.isBought = !p.isBought; saveToDrive(); setTimeout(() => refreshView(), 200); }
     }
 
     function updateQty(id, change) {
@@ -573,10 +630,7 @@
 
     function updateQtyManual(id, val) {
         const p = products.find(x => x.id === id);
-        if(p) {
-            p.qty = val;
-            saveToDrive();
-        }
+        if(p) { p.qty = val; saveToDrive(); }
     }
 
     // Modal Logic
@@ -645,8 +699,8 @@
         }
     }
 
-    function clearAllList() {
-        if(confirm('האם לאפס את כל הרשימה?')) {
+    function clearAllListOnly() {
+        if(confirm('האם לאפס את כל הבחירות? (המוצרים יישארו במאגר)')) {
             products.forEach(p => { 
                 p.isSelected = false; 
                 p.isBought = false; 
@@ -654,6 +708,17 @@
             });
             saveToDrive();
             switchTab('catalog');
+        }
+    }
+    
+    // כפתור מחיקה אמיתית (מהמסד)
+    function clearAllData() {
+        if(confirm('אזהרה: פעולה זו תמחק את כל המוצרים מהאפליקציה לצמיתות!')) {
+            if(confirm('האם אתה בטוח ב-100%? הכל יימחק.')) {
+                products = []; // ריקון המערך
+                saveToDrive();
+                refreshView();
+            }
         }
     }
 </script>
