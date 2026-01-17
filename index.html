@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 3.0</title>
+    <title>SuperList Pro 3.1</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -30,7 +30,10 @@
         .icon-btn { background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .icon-btn:active { background: rgba(255,255,255,0.4); }
         
-        #auth-btn { background: white; color: #444; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* Google Button Fix */
+        #auth-btn { background: white; color: #444; border: none; padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        #auth-btn:active { transform: scale(0.98); }
+        #auth-btn img { display: block; }
 
         .hidden { display: none !important; }
         .content { padding: 15px; flex: 1; padding-bottom: 50px; }
@@ -105,7 +108,12 @@
         </div>
         
         <button id="auth-btn" onclick="handleAuthClick()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" width="18">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+            </svg>
             התחבר עם Google
         </button>
         <button id="signout-btn" onclick="handleSignoutClick()" class="hidden" style="background:none; border:1px solid rgba(255,255,255,0.5); color:white; cursor:pointer; padding:4px 10px; border-radius:15px; font-size:12px;">התנתק</button>
@@ -131,6 +139,12 @@
 
         <div id="view-catalog" class="content">
             <div id="catalog-list-container"></div>
+            
+            <div class="actions-bar">
+                <button class="action-btn btn-clear-all" onclick="clearAllList()">
+                    ⚠️ אפס את כל הרשימה
+                </button>
+            </div>
         </div>
 
         <div id="view-shopping" class="content hidden">
@@ -295,7 +309,6 @@
             products = response.result || [];
             if (typeof products !== 'object') products = [];
             
-            // תמיכה בשדות חדשים (isBase)
             products.forEach(p => { 
                 if(!p.qty) p.qty = 1;
                 if(p.isBase === undefined) p.isBase = false;
@@ -335,7 +348,6 @@
     const CATEGORIES = ["ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", "ניקיון ובית", "כללי"];
 
     function refreshView() {
-        // מזהה איזה טאב פעיל ומרענן אותו
         const activeTab = document.querySelector('.tab.active').innerText;
         if(activeTab.includes('קניה')) renderShoppingList();
         else if(activeTab.includes('תכנון')) renderCatalog();
@@ -381,7 +393,6 @@
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
         renderGroupedList(container, products, (p) => {
-            // Sort logic handled in generic function? No, specific sort here
             return `
                 <div class="item-main" onclick="toggleSelect(${p.id})">
                     <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
@@ -415,7 +426,6 @@
                 header.innerText = cat;
                 container.appendChild(header);
                 
-                // Sort by Name
                 groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
 
                 groups[cat].forEach(p => {
@@ -601,8 +611,6 @@
             p.name = name; p.category = cat;
         } else {
             if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
-            // מוצר חדש מתווסף אוטומטית כנבחר וכבסיס אם מוסיפים אותו מהטאב המתאים?
-            // כרגע: מתווסף וזהו. המשתמש יחליט.
             products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false, qty: 1, isBase: false });
         }
         saveToDrive();
