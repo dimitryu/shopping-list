@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 3.5</title>
+    <title>SuperList Pro 3.6 - Israel Top Items</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -21,25 +21,12 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 600px; background: var(--card-bg); min-height: 100vh; box-shadow: 0 0 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
         
-        /* --- Sticky Header Container --- */
-        .sticky-header-container {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background-color: var(--card-bg);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        /* Sticky Header */
+        .sticky-header-container { position: sticky; top: 0; z-index: 100; background-color: var(--card-bg); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        /* Header Styling */
         header { 
-            background-color: var(--header-bg); 
-            color: white; 
-            padding: 0.5rem 1rem;
-            display: flex; 
-            flex-direction: row;
-            align-items: center; 
-            justify-content: space-between;
-            gap: 10px; 
+            background-color: var(--header-bg); color: white; padding: 0.5rem 1rem;
+            display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; 
         }
 
         .header-title-area { display: flex; align-items: center; gap: 8px; flex: 1; }
@@ -55,12 +42,10 @@
         .hidden { display: none !important; }
         .content { padding: 15px; flex: 1; padding-bottom: 50px; }
         
-        /* Tabs */
         .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; }
         .tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.9rem; }
         .tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); background: #f8faff; }
         
-        /* Items */
         .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; background: white; }
         .item:active { background-color: #f5f5f5; }
         .item-main { display: flex; align-items: center; flex: 1; cursor: pointer; gap: 12px; }
@@ -81,38 +66,22 @@
         .item.bought .checkbox { background-color: #ddd; border-color: #ddd; }
         .item.bought .qty-control { opacity: 0.5; pointer-events: none; }
 
-        /* Collapsible Category Header */
         .category-header { 
-            background-color: #e8f0fe; 
-            color: var(--primary-color); 
-            padding: 10px 12px; 
-            margin-top: 15px; 
-            margin-bottom: 5px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            font-size: 0.95em; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
+            background-color: #e8f0fe; color: var(--primary-color); padding: 10px 12px; margin-top: 15px; margin-bottom: 5px; 
+            border-radius: 8px; font-weight: bold; font-size: 0.95em; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;
         }
         .category-header:hover { background-color: #dbe8fc; }
         .arrow-icon { transition: transform 0.2s; font-size: 0.8em; }
         .arrow-icon.closed { transform: rotate(90deg); }
         .category-items-container.closed { display: none; }
-
         .cart-header { background-color: var(--cart-header-bg); color: #555; }
 
-        /* Buttons */
         .actions-bar { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;}
         .action-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        
         .btn-clear-bought { background-color: #ffebee; color: var(--danger-color); }
         .btn-reset-plan { background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
         .btn-add-base { background-color: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
 
-        /* Modal */
         .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(2px); }
         .modal { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .modal h3 { margin-top: 0; color: #444; }
@@ -129,7 +98,6 @@
 <body>
 
 <div class="app-container">
-    
     <div class="sticky-header-container">
         <header>
             <div class="header-title-area">
@@ -178,7 +146,7 @@
             
             <div class="actions-bar">
                 <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
-                    ♻️ נקה רשימת תכנון (חד פעמיים יימחקו)
+                    ♻️ נקה את התכנון (הסר חד-פעמיים)
                 </button>
             </div>
         </div>
@@ -191,7 +159,7 @@
                     🗑️ נקה מוצרים שנקנו
                 </button>
                 <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
-                    🏁 סיימתי קניות (חד פעמיים יימחקו)
+                    🏁 סיימתי קניות (נקה חד-פעמיים)
                 </button>
             </div>
         </div>
@@ -228,7 +196,6 @@
     const API_KEY = 'AIzaSyB9PVroJWU0ynWjfVMa_0iWYZWd0JLTboM'; // להחליף
     // ==========================================
 
-
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const FILE_NAME = 'superlist_data.json';
@@ -240,6 +207,7 @@
     let products = [];
     let categoryState = {}; 
 
+    // --- Google Init ---
     function gapiLoaded() {
         gapi.load('client', async () => {
             try {
@@ -255,4 +223,528 @@
     }
 
     function gisLoaded() {
-        tokenClient = google.accounts.oauth2.initToken
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID, scope: SCOPES, callback: '',
+        });
+        gisInited = true;
+        checkAuth();
+    }
+
+    function checkAuth() {
+        if (gapiInited && gisInited) {
+            document.getElementById('auth-btn').style.display = 'flex';
+        }
+    }
+
+    function handleAuthClick() {
+        tokenClient.callback = async (resp) => {
+            if (resp.error) throw resp;
+            showApp();
+            await findOrCreateFile();
+        };
+        if (gapi.client.getToken() === null) {
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        } else {
+            tokenClient.requestAccessToken({prompt: ''});
+        }
+    }
+
+    function handleSignoutClick() {
+        const token = gapi.client.getToken();
+        if (token !== null) {
+            google.accounts.oauth2.revoke(token.access_token);
+            gapi.client.setToken('');
+            document.getElementById('app-content').classList.add('hidden');
+            document.getElementById('auth-btn').classList.remove('hidden');
+            document.getElementById('signout-btn').classList.add('hidden');
+            document.getElementById('status-msg').innerText = 'ממתין...';
+            products = [];
+        }
+    }
+
+    function showApp() {
+        document.getElementById('auth-btn').classList.add('hidden');
+        document.getElementById('signout-btn').classList.remove('hidden');
+        document.getElementById('app-content').classList.remove('hidden');
+    }
+
+    // --- Drive Logic ---
+    async function findOrCreateFile() {
+        document.getElementById('status-msg').innerText = 'מסנכרן...';
+        try {
+            const response = await gapi.client.drive.files.list({
+                q: `name = '${FILE_NAME}' and trashed = false`,
+                fields: 'files(id, name)', spaces: 'drive'
+            });
+            const files = response.result.files;
+            if (files && files.length > 0) {
+                driveFileId = files[0].id;
+                await loadFileContent();
+            } else {
+                await createNewFile();
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('status-msg').innerText = 'שגיאת רשת';
+        }
+    }
+
+    async function createNewFile() {
+        const initialData = JSON.stringify(initializeDefaultData());
+        const metadata = { name: FILE_NAME, mimeType: 'application/json' };
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', new Blob([initialData], { type: 'application/json' }));
+        const accessToken = gapi.client.getToken().access_token;
+        const fetchResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST', headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }), body: form
+        });
+        const file = await fetchResponse.json();
+        driveFileId = file.id;
+        products = initializeDefaultData(); // טוען את נתוני ברירת המחדל לזיכרון
+        renderCatalog();
+        document.getElementById('status-msg').innerText = 'מחובר ✅';
+    }
+
+    // --- אתחול נתונים ישראליים אמיתיים ---
+    function initializeDefaultData() {
+        const rawItems = [
+            // חלב וביצים
+            { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", b: true },
+            { n: "קוטג' 5%", c: "מוצרי חלב וביצים", b: true },
+            { n: "גבינה לבנה 5%", c: "מוצרי חלב וביצים", b: true },
+            { n: "גבינה צהובה עמק", c: "מוצרי חלב וביצים", b: true },
+            { n: "ביצים L (תבנית)", c: "מוצרי חלב וביצים", b: true },
+            { n: "חמאה", c: "מוצרי חלב וביצים", b: true },
+            { n: "מילקי", c: "מוצרי חלב וביצים", b: true },
+            { n: "שמנת מתוקה", c: "מוצרי חלב וביצים", b: true },
+            
+            // ירקות ופירות
+            { n: "מלפפונים", c: "ירקות ופירות", b: true },
+            { n: "עגבניות", c: "ירקות ופירות", b: true },
+            { n: "בצל יבש", c: "ירקות ופירות", b: true },
+            { n: "תפוחי אדמה", c: "ירקות ופירות", b: true },
+            { n: "גזר", c: "ירקות ופירות", b: false },
+            { n: "בננות", c: "ירקות ופירות", b: true },
+            { n: "לימון", c: "ירקות ופירות", b: true },
+            { n: "חסה", c: "ירקות ופירות", b: false },
+
+            // לחם
+            { n: "לחם פרוס", c: "לחם ומאפים", b: true },
+            { n: "פיתות", c: "לחם ומאפים", b: true },
+
+            // מזווה
+            { n: "קפה נמס (טייסטרס)", c: "מזווה ובישול", b: true },
+            { n: "קפה שחור טורקי", c: "מזווה ובישול", b: false },
+            { n: "סוכר", c: "מזווה ובישול", b: true },
+            { n: "שמן קנולה/חמניות", c: "מזווה ובישול", b: true },
+            { n: "שמן זית", c: "מזווה ובישול", b: true },
+            { n: "פסטה", c: "מזווה ובישול", b: true },
+            { n: "אורז", c: "מזווה ובישול", b: true },
+            { n: "שימורי טונה", c: "מזווה ובישול", b: true },
+            { n: "רסק עגבניות", c: "מזווה ובישול", b: true },
+            { n: "חומוס אחלה/צבר", c: "מזווה ובישול", b: true },
+            { n: "טחינה גולמית", c: "מזווה ובישול", b: false },
+            { n: "במבה", c: "מזווה ובישול", b: true },
+            { n: "ביסלי", c: "מזווה ובישול", b: false },
+            { n: "קורנפלקס (דגני בוקר)", c: "מזווה ובישול", b: true },
+
+            // ניקיון
+            { n: "נייר טואלט", c: "ניקיון ובית", b: true },
+            { n: "מגבות נייר", c: "ניקיון ובית", b: true },
+            { n: "נוזל כלים", c: "ניקיון ובית", b: true },
+            { n: "שקיות זבל", c: "ניקיון ובית", b: false },
+            { n: "שמפו", c: "ניקיון ובית", b: false },
+
+            // בשר
+            { n: "חזה עוף / שניצל", c: "בשר ודגים", b: false },
+            { n: "בשר טחון", c: "בשר ודגים", b: false }
+        ];
+
+        return rawItems.map((item, index) => ({
+            id: Date.now() + index,
+            name: item.n,
+            category: item.c,
+            isBase: item.b,
+            isSelected: false,
+            isBought: false,
+            qty: 1
+        }));
+    }
+
+    async function loadFileContent() {
+        try {
+            document.getElementById('status-msg').innerText = 'טוען...';
+            const response = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+            products = response.result || [];
+            if (typeof products !== 'object') products = [];
+            
+            products.forEach(p => { 
+                if(!p.qty) p.qty = 1;
+                if(p.isBase === undefined) p.isBase = false;
+            });
+
+            refreshView();
+            document.getElementById('status-msg').innerText = 'מעודכן ✅';
+        } catch (err) {
+            console.error(err);
+            document.getElementById('status-msg').innerText = 'שגיאה';
+        }
+    }
+
+    async function saveToDrive() {
+        if (!driveFileId) return;
+        document.getElementById('status-msg').innerText = 'שומר...';
+        const content = JSON.stringify(products);
+        const accessToken = gapi.client.getToken().access_token;
+        try {
+            await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+                method: 'PATCH',
+                headers: new Headers({ 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' }),
+                body: content
+            });
+            document.getElementById('status-msg').innerText = 'נשמר ✅';
+        } catch (err) {
+            console.error('Error saving', err);
+            document.getElementById('status-msg').innerText = 'תקלת שמירה';
+        }
+    }
+
+    function syncNow() {
+        if(driveFileId) loadFileContent();
+    }
+
+    // --- App Logic ---
+    const CATEGORIES = ["ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", "ניקיון ובית", "כללי"];
+
+    function refreshView() {
+        const activeTab = document.querySelector('.tab.active').innerText;
+        if(activeTab.includes('קניה')) renderShoppingList();
+        else if(activeTab.includes('תכנון')) renderCatalog();
+        else renderBaseList();
+    }
+
+    function switchTab(tab) {
+        document.getElementById('view-catalog').classList.add('hidden');
+        document.getElementById('view-shopping').classList.add('hidden');
+        document.getElementById('view-base').classList.add('hidden');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        if(tab === 'catalog') {
+            document.getElementById('view-catalog').classList.remove('hidden');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            renderCatalog();
+        } else if (tab === 'shopping') {
+            document.getElementById('view-shopping').classList.remove('hidden');
+            document.querySelectorAll('.tab')[2].classList.add('active');
+            renderShoppingList();
+        } else {
+            document.getElementById('view-base').classList.remove('hidden');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            renderBaseList();
+        }
+    }
+
+    // --- Category Collapse Logic ---
+    function toggleCategory(categoryName) {
+        categoryState[categoryName] = !categoryState[categoryName];
+        refreshView();
+    }
+
+    function renderGroupedList(container, itemList, itemTemplateFunc) {
+        const groups = {};
+        CATEGORIES.forEach(c => groups[c] = []);
+        itemList.forEach(p => {
+            const cat = p.category || 'כללי';
+            if(!groups[cat]) groups[cat] = [];
+            groups[cat].push(p);
+        });
+
+        CATEGORIES.forEach(cat => {
+            if(groups[cat].length > 0) {
+                const isCollapsed = categoryState[cat];
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.onclick = () => toggleCategory(cat);
+                header.innerHTML = `
+                    <span>${cat}</span>
+                    <span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>
+                `;
+                container.appendChild(header);
+                
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = `category-items-container ${isCollapsed ? 'closed' : ''}`;
+                
+                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
+
+                groups[cat].forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = itemTemplateFunc(p);
+                    itemsDiv.appendChild(div);
+                });
+                
+                container.appendChild(itemsDiv);
+            }
+        });
+    }
+
+    function renderBaseList() {
+        const container = document.getElementById('base-list-container');
+        container.innerHTML = '';
+        renderGroupedList(container, products, (p) => {
+            return `
+                <div class="item-main" onclick="toggleBase(${p.id})">
+                    <div class="star-check ${p.isBase ? 'active' : ''}">★</div>
+                    <span>${p.name}</span>
+                </div>
+                <button onclick="openEditModal(${p.id})" style="border:none; background:none; cursor:pointer; font-size:18px; color:#ccc; margin-right:5px;">✎</button>
+            `;
+        });
+    }
+
+    function renderCatalog() {
+        const container = document.getElementById('catalog-list-container');
+        container.innerHTML = '';
+        renderGroupedList(container, products, (p) => {
+            return `
+                <div class="item-main" onclick="toggleSelect(${p.id})">
+                    <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
+                    <span>${p.name}</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                     <div class="qty-control" onclick="event.stopPropagation()">
+                        <button class="qty-btn" onclick="updateQty(${p.id}, -1)">-</button>
+                        <input type="text" class="qty-input-manual" value="${p.qty || 1}" onchange="updateQtyManual(${p.id}, this.value)">
+                        <button class="qty-btn" onclick="updateQty(${p.id}, 1)">+</button>
+                    </div>
+                    <button onclick="openEditModal(${p.id})" style="border:none; background:none; cursor:pointer; font-size:18px; color:#ccc; margin-right:5px;">✎</button>
+                </div>
+            `;
+        });
+    }
+
+    function renderShoppingList() {
+        const container = document.getElementById('shopping-list-container');
+        container.innerHTML = '';
+        
+        let activeItems = products.filter(p => p.isSelected && !p.isBought);
+        let boughtItems = products.filter(p => p.isSelected && p.isBought);
+        
+        if(activeItems.length === 0 && boughtItems.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה ריקה 🎉</div>';
+            return;
+        }
+
+        const groups = {}; 
+        activeItems.forEach(p => {
+            const cat = p.category || 'כללי';
+            if(!groups[cat]) groups[cat] = [];
+            groups[cat].push(p);
+        });
+
+        CATEGORIES.forEach(cat => {
+            if(groups[cat] && groups[cat].length > 0) {
+                const isCollapsed = categoryState[cat];
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.onclick = () => toggleCategory(cat);
+                header.innerHTML = `<span>${cat}</span><span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>`;
+                container.appendChild(header);
+                
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = `category-items-container ${isCollapsed ? 'closed' : ''}`;
+
+                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
+
+                groups[cat].forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = `item`;
+                    div.innerHTML = `
+                        <div class="item-main" onclick="toggleBought(${p.id})">
+                            <div class="checkbox"></div>
+                            <span>${p.name}</span>
+                        </div>
+                        <div class="qty-control" style="background:transparent;">
+                            <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
+                        </div>
+                    `;
+                    itemsDiv.appendChild(div);
+                });
+                container.appendChild(itemsDiv);
+            }
+        });
+
+        if (boughtItems.length > 0) {
+            const cartHeader = document.createElement('div');
+            cartHeader.className = 'category-header cart-header';
+            cartHeader.innerText = '🛒 מוצרים בעגלה';
+            container.appendChild(cartHeader);
+            
+            boughtItems.sort((a,b) => a.name.localeCompare(b.name, 'he'));
+
+            boughtItems.forEach(p => {
+                const div = document.createElement('div');
+                div.className = `item bought`;
+                div.innerHTML = `
+                    <div class="item-main" onclick="toggleBought(${p.id})">
+                        <div class="checkbox checked"></div>
+                        <span>${p.name}</span>
+                    </div>
+                    <div class="qty-control" style="background:transparent;">
+                        <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    }
+
+    // --- Actions ---
+
+    function toggleSelect(id) {
+        const p = products.find(x => x.id === id);
+        if(p) { p.isSelected = !p.isSelected; if(!p.isSelected) p.isBought = false; saveToDrive(); refreshView(); }
+    }
+
+    function toggleBase(id) {
+        const p = products.find(x => x.id === id);
+        if(p) { p.isBase = !p.isBase; saveToDrive(); refreshView(); }
+    }
+
+    function addBaseToPlan() {
+        let count = 0;
+        products.forEach(p => {
+            if (p.isBase === true && !p.isSelected) {
+                p.isSelected = true;
+                count++;
+            }
+        });
+        if (count > 0) {
+            saveToDrive();
+            alert('הוספו ' + count + ' מוצרים לרשימת התכנון');
+            switchTab('catalog');
+        } else {
+            alert('כל המוצרים הקבועים (המסומנים בכוכבית) כבר נמצאים בתכנון');
+        }
+    }
+
+    function toggleBought(id) {
+        const p = products.find(x => x.id === id);
+        if(p) { p.isBought = !p.isBought; saveToDrive(); setTimeout(() => refreshView(), 200); }
+    }
+
+    function updateQty(id, change) {
+        const p = products.find(x => x.id === id);
+        if(p) {
+            let currentVal = parseFloat(p.qty);
+            if(isNaN(currentVal)) currentVal = 1;
+            let newQty = currentVal + change;
+            if(newQty < 1) newQty = 1;
+            p.qty = newQty;
+            saveToDrive();
+            refreshView();
+        }
+    }
+
+    function updateQtyManual(id, val) {
+        const p = products.find(x => x.id === id);
+        if(p) { p.qty = val; saveToDrive(); }
+    }
+
+    // Modal Logic
+    let currentEditId = null;
+    function openAddModal() { 
+        currentEditId = null; 
+        document.getElementById('modal-name-input').value = ''; 
+        document.getElementById('modal-delete-btn').classList.add('hidden'); 
+        document.getElementById('edit-modal').classList.remove('hidden'); 
+        setTimeout(() => document.getElementById('modal-name-input').focus(), 100);
+    }
+    
+    function openEditModal(id) { 
+        const p = products.find(x => x.id === id);
+        if(!p) return;
+        currentEditId = id; 
+        document.getElementById('modal-name-input').value = p.name;
+        document.getElementById('modal-category-input').value = p.category || 'כללי';
+        document.getElementById('modal-delete-btn').classList.remove('hidden'); 
+        document.getElementById('edit-modal').classList.remove('hidden'); 
+    }
+    
+    function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    function handleModalSave() {
+        const name = document.getElementById('modal-name-input').value;
+        const cat = document.getElementById('modal-category-input').value;
+        if(!name) return;
+
+        if(currentEditId) {
+            const p = products.find(x => x.id === currentEditId);
+            p.name = name; p.category = cat;
+        } else {
+            if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
+            products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false, qty: 1, isBase: false });
+        }
+        saveToDrive();
+        closeModal();
+        refreshView();
+    }
+
+    function deleteItem() {
+        if(currentEditId && confirm('למחוק לצמיתות?')) {
+            products = products.filter(x => x.id !== currentEditId);
+            saveToDrive();
+            closeModal();
+            refreshView();
+        }
+    }
+
+    // --- לוגיקת איפוס מתוחכמת (3.5) ---
+    function resetPlanningList() {
+        if(confirm('האם לנקות את רשימת הקניות? (מוצרים קבועים יישמרו, חד-פעמיים יימחקו)')) {
+            // סינון המוצרים:
+            // שומרים רק את מי ש:
+            // 1. לא נבחר (isSelected=false) - אלה מוצרים שסתם במאגר
+            // 2. או שהוא מסומן כ"קבוע" (isBase=true) - אותם אסור למחוק, רק לאפס סימון
+            
+            // מוצרים שהם גם נבחרו (isSelected=true) וגם לא קבועים (isBase=false) -> יימחקו מהמערך!
+            
+            products = products.filter(p => {
+                if (!p.isSelected) return true; // אם לא נבחר בכלל, תמיד נשאר (נמצא במאגר)
+                if (p.isBase) return true;      // אם קבוע, תמיד נשאר
+                return false;                   // נבחר + לא קבוע = למחוק
+            });
+
+            // איפוס הסימונים למי שנשאר
+            products.forEach(p => {
+                p.isSelected = false;
+                p.isBought = false;
+                p.qty = 1;
+            });
+
+            saveToDrive();
+            refreshView();
+        }
+    }
+
+    function clearBoughtItems() {
+        let changed = false;
+        products.forEach(p => {
+            if(p.isSelected && p.isBought) {
+                p.isSelected = false;
+                p.isBought = false;
+                p.qty = 1;
+                changed = true;
+            }
+        });
+        if(changed) {
+            saveToDrive();
+            switchTab('catalog');
+        } else {
+            alert('אין מוצרים מסומנים שנרכשו');
+        }
+    }
+</script>
+</body>
+</html>
