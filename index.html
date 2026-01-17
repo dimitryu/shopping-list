@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 3.2</title>
+    <title>SuperList Pro 3.4</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -34,15 +34,15 @@
         header { 
             background-color: var(--header-bg); 
             color: white; 
-            padding: 0.5rem 1rem; /* הקטנת מרווחים */
+            padding: 8px 12px; /* גובה מצומצם */
             display: flex; 
-            flex-direction: row; /* סידור בשורה אחת */
+            flex-direction: row;
             align-items: center; 
             justify-content: space-between;
             gap: 10px; 
         }
 
-        .header-title-area { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .header-title-area { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
         .header-title { font-size: 1.1rem; font-weight: bold; white-space: nowrap; }
         
         .header-actions { display: flex; gap: 8px; align-items: center; }
@@ -51,15 +51,15 @@
         .icon-btn:active { background: rgba(255,255,255,0.4); }
         
         /* Google Button Compact */
-        #auth-btn { background: white; color: #444; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        #auth-btn img, #auth-btn svg { display: block; width: 16px; height: 16px; }
+        #auth-btn { background: white; color: #444; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap; }
+        #auth-btn img, #auth-btn svg { display: block; width: 14px; height: 14px; }
 
         .hidden { display: none !important; }
         .content { padding: 15px; flex: 1; padding-bottom: 50px; }
         
-        /* Tabs - Now part of sticky container */
+        /* Tabs */
         .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; }
-        .tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.9rem; }
+        .tab { flex: 1; padding: 10px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.9rem; }
         .tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); background: #f8faff; }
         
         /* Items */
@@ -115,7 +115,7 @@
         .action-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         
         .btn-clear-bought { background-color: #ffebee; color: var(--danger-color); }
-        .btn-clear-all { background-color: #333; color: #fff; font-size: 14px; padding: 12px;}
+        .btn-reset-plan { background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
         .btn-add-base { background-color: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
 
         /* Modal */
@@ -184,8 +184,8 @@
             <div id="catalog-list-container"></div>
             
             <div class="actions-bar">
-                <button class="action-btn btn-clear-all" onclick="clearAllData()">
-                    🧨 מחק את כל המוצרים (איפוס מלא)
+                <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
+                    ♻️ נקה את התכנון (המוצרים יישמרו)
                 </button>
             </div>
         </div>
@@ -197,8 +197,8 @@
                 <button class="action-btn btn-clear-bought" onclick="clearBoughtItems()">
                     🗑️ נקה מוצרים שנקנו
                 </button>
-                <button class="action-btn btn-clear-all" onclick="clearAllListOnly()">
-                    ⚠️ אפס בחירות (השאר מוצרים)
+                <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
+                    🏁 סיימתי קניות (אפס רשימה)
                 </button>
             </div>
         </div>
@@ -246,8 +246,7 @@
     let driveFileId = null;
     let products = [];
     
-    // ניהול מצב פתיחה/סגירה של קטגוריות
-    let categoryState = {}; // { 'dairy': true/false } - true means collapsed
+    let categoryState = {}; 
 
     // --- Google Init ---
     function gapiLoaded() {
@@ -438,7 +437,6 @@
 
         CATEGORIES.forEach(cat => {
             if(groups[cat].length > 0) {
-                // Header with click event
                 const isCollapsed = categoryState[cat];
                 const header = document.createElement('div');
                 header.className = 'category-header';
@@ -449,11 +447,9 @@
                 `;
                 container.appendChild(header);
                 
-                // Items Container
                 const itemsDiv = document.createElement('div');
                 itemsDiv.className = `category-items-container ${isCollapsed ? 'closed' : ''}`;
                 
-                // Sort by Name
                 groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
 
                 groups[cat].forEach(p => {
@@ -515,7 +511,6 @@
             return;
         }
 
-        // 1. Render items TO BUY
         const groups = {}; 
         activeItems.forEach(p => {
             const cat = p.category || 'כללי';
@@ -555,7 +550,7 @@
             }
         });
 
-        // 2. Render BOUGHT items
+        // Bought Items
         if (boughtItems.length > 0) {
             const cartHeader = document.createElement('div');
             cartHeader.className = 'category-header cart-header';
@@ -593,20 +588,23 @@
         if(p) { p.isBase = !p.isBase; saveToDrive(); refreshView(); }
     }
 
+    // התיקון הקריטי כאן: רק מה שמסומן בכוכבית נכנס
     function addBaseToPlan() {
         let count = 0;
         products.forEach(p => {
-            if (p.isBase && !p.isSelected) {
+            // רק אם isBase הוא true ועדיין לא נבחר - אז נוסיף
+            if (p.isBase === true && !p.isSelected) {
                 p.isSelected = true;
                 count++;
             }
         });
+        
         if (count > 0) {
             saveToDrive();
-            alert('הוספו ' + count + ' מוצרים');
+            alert('הוספו ' + count + ' מוצרים לרשימת התכנון');
             switchTab('catalog');
         } else {
-            alert('הכל כבר בתכנון');
+            alert('כל המוצרים הקבועים (המסומנים בכוכבית) כבר נמצאים בתכנון');
         }
     }
 
@@ -681,6 +679,19 @@
         }
     }
 
+    // פונקציית איפוס בטוחה
+    function resetPlanningList() {
+        if(confirm('האם לאפס את רשימת הקניות? (המוצרים יישארו במאגר)')) {
+            products.forEach(p => {
+                p.isSelected = false;
+                p.isBought = false;
+                p.qty = 1;
+            });
+            saveToDrive();
+            refreshView();
+        }
+    }
+
     function clearBoughtItems() {
         let changed = false;
         products.forEach(p => {
@@ -696,29 +707,6 @@
             switchTab('catalog');
         } else {
             alert('אין מוצרים מסומנים שנרכשו');
-        }
-    }
-
-    function clearAllListOnly() {
-        if(confirm('האם לאפס את כל הבחירות? (המוצרים יישארו במאגר)')) {
-            products.forEach(p => { 
-                p.isSelected = false; 
-                p.isBought = false; 
-                p.qty = 1; 
-            });
-            saveToDrive();
-            switchTab('catalog');
-        }
-    }
-    
-    // כפתור מחיקה אמיתית (מהמסד)
-    function clearAllData() {
-        if(confirm('אזהרה: פעולה זו תמחק את כל המוצרים מהאפליקציה לצמיתות!')) {
-            if(confirm('האם אתה בטוח ב-100%? הכל יימחק.')) {
-                products = []; // ריקון המערך
-                saveToDrive();
-                refreshView();
-            }
         }
     }
 </script>
