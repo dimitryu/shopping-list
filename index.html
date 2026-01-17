@@ -128,9 +128,23 @@
     // --- אתחול גוגל ---
     function gapiLoaded() {
         gapi.load('client', async () => {
-            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-            gapiInited = true;
-            checkAuth();
+            try {
+                // שלב 1: אתחול בסיסי
+                await gapi.client.init({
+                    apiKey: API_KEY,
+                    discoveryDocs: [], // משאירים ריק ומטענים ידנית למטה
+                });
+
+                // שלב 2: טעינה מפורשת של ספריית הדרייב
+                await gapi.client.load('drive', 'v3');
+                
+                console.log('Drive API loaded successfully'); // בדיקה בקונסול
+                gapiInited = true;
+                checkAuth();
+            } catch (err) {
+                console.error('Error loading GAPI:', err);
+                document.getElementById('status-msg').innerText = 'שגיאה בטעינת גוגל API - בדוק Console';
+            }
         });
     }
 
@@ -421,3 +435,4 @@
 </script>
 </body>
 </html>
+
