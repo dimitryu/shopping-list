@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 3.6 - Israel Top Items</title>
+    <title>SuperList Pro 3.8</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -21,7 +21,6 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 600px; background: var(--card-bg); min-height: 100vh; box-shadow: 0 0 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
         
-        /* Sticky Header */
         .sticky-header-container { position: sticky; top: 0; z-index: 100; background-color: var(--card-bg); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         header { 
@@ -146,7 +145,7 @@
             
             <div class="actions-bar">
                 <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
-                    ♻️ נקה את התכנון (הסר חד-פעמיים)
+                    ♻️ נקה את התכנון (חדש שבוע)
                 </button>
             </div>
         </div>
@@ -159,7 +158,7 @@
                     🗑️ נקה מוצרים שנקנו
                 </button>
                 <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
-                    🏁 סיימתי קניות (נקה חד-פעמיים)
+                    🏁 סיימתי קניות (אפס הכל)
                 </button>
             </div>
         </div>
@@ -196,7 +195,6 @@
     const API_KEY = 'AIzaSyB9PVroJWU0ynWjfVMa_0iWYZWd0JLTboM'; // להחליף
     // ==========================================
 
-
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const FILE_NAME = 'superlist_data.json';
@@ -208,7 +206,6 @@
     let products = [];
     let categoryState = {}; 
 
-    // --- Google Init ---
     function gapiLoaded() {
         gapi.load('client', async () => {
             try {
@@ -302,15 +299,14 @@
         });
         const file = await fetchResponse.json();
         driveFileId = file.id;
-        products = initializeDefaultData(); // טוען את נתוני ברירת המחדל לזיכרון
+        products = initializeDefaultData(); 
         renderCatalog();
         document.getElementById('status-msg').innerText = 'מחובר ✅';
     }
 
-    // --- אתחול נתונים ישראליים אמיתיים ---
     function initializeDefaultData() {
+        // ישראל טופ 30
         const rawItems = [
-            // חלב וביצים
             { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", b: true },
             { n: "קוטג' 5%", c: "מוצרי חלב וביצים", b: true },
             { n: "גבינה לבנה 5%", c: "מוצרי חלב וביצים", b: true },
@@ -319,8 +315,6 @@
             { n: "חמאה", c: "מוצרי חלב וביצים", b: true },
             { n: "מילקי", c: "מוצרי חלב וביצים", b: true },
             { n: "שמנת מתוקה", c: "מוצרי חלב וביצים", b: true },
-            
-            // ירקות ופירות
             { n: "מלפפונים", c: "ירקות ופירות", b: true },
             { n: "עגבניות", c: "ירקות ופירות", b: true },
             { n: "בצל יבש", c: "ירקות ופירות", b: true },
@@ -329,12 +323,8 @@
             { n: "בננות", c: "ירקות ופירות", b: true },
             { n: "לימון", c: "ירקות ופירות", b: true },
             { n: "חסה", c: "ירקות ופירות", b: false },
-
-            // לחם
             { n: "לחם פרוס", c: "לחם ומאפים", b: true },
             { n: "פיתות", c: "לחם ומאפים", b: true },
-
-            // מזווה
             { n: "קפה נמס (טייסטרס)", c: "מזווה ובישול", b: true },
             { n: "קפה שחור טורקי", c: "מזווה ובישול", b: false },
             { n: "סוכר", c: "מזווה ובישול", b: true },
@@ -349,15 +339,11 @@
             { n: "במבה", c: "מזווה ובישול", b: true },
             { n: "ביסלי", c: "מזווה ובישול", b: false },
             { n: "קורנפלקס (דגני בוקר)", c: "מזווה ובישול", b: true },
-
-            // ניקיון
             { n: "נייר טואלט", c: "ניקיון ובית", b: true },
             { n: "מגבות נייר", c: "ניקיון ובית", b: true },
             { n: "נוזל כלים", c: "ניקיון ובית", b: true },
             { n: "שקיות זבל", c: "ניקיון ובית", b: false },
             { n: "שמפו", c: "ניקיון ובית", b: false },
-
-            // בשר
             { n: "חזה עוף / שניצל", c: "בשר ודגים", b: false },
             { n: "בשר טחון", c: "בשר ודגים", b: false }
         ];
@@ -379,12 +365,7 @@
             const response = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
             products = response.result || [];
             if (typeof products !== 'object') products = [];
-            
-            products.forEach(p => { 
-                if(!p.qty) p.qty = 1;
-                if(p.isBase === undefined) p.isBase = false;
-            });
-
+            products.forEach(p => { if(!p.qty) p.qty = 1; if(p.isBase === undefined) p.isBase = false; });
             refreshView();
             document.getElementById('status-msg').innerText = 'מעודכן ✅';
         } catch (err) {
@@ -446,12 +427,12 @@
         }
     }
 
-    // --- Category Collapse Logic ---
     function toggleCategory(categoryName) {
         categoryState[categoryName] = !categoryState[categoryName];
         refreshView();
     }
 
+    // פונקציית עזר לרינדור קבוצות (משותפת לכל הטאבים)
     function renderGroupedList(container, itemList, itemTemplateFunc) {
         const groups = {};
         CATEGORIES.forEach(c => groups[c] = []);
@@ -490,10 +471,13 @@
         });
     }
 
+    // 1. טאב קבועים - מציג רק isBase
     function renderBaseList() {
         const container = document.getElementById('base-list-container');
         container.innerHTML = '';
-        renderGroupedList(container, products, (p) => {
+        const baseItems = products.filter(p => p.isBase); // מסנן רק בסיסיים
+        
+        renderGroupedList(container, baseItems, (p) => {
             return `
                 <div class="item-main" onclick="toggleBase(${p.id})">
                     <div class="star-check ${p.isBase ? 'active' : ''}">★</div>
@@ -504,10 +488,23 @@
         });
     }
 
+    // 2. טאב תכנון - מציג:
+    //    א. מוצרים שהם לא Base (חד פעמיים)
+    //    ב. מוצרים שהם Base וגם נבחרו (isSelected)
+    //    ג. מסתיר Base שלא נבחרו
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
-        renderGroupedList(container, products, (p) => {
+        
+        // לוגיקת הסינון החדשה:
+        const planningItems = products.filter(p => !p.isBase || p.isSelected);
+
+        if(planningItems.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה נקייה. הוסף מוצרים או טען מקבועים.</div>';
+            return;
+        }
+
+        renderGroupedList(container, planningItems, (p) => {
             return `
                 <div class="item-main" onclick="toggleSelect(${p.id})">
                     <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
@@ -525,6 +522,7 @@
         });
     }
 
+    // 3. טאב קניות
     function renderShoppingList() {
         const container = document.getElementById('shopping-list-container');
         container.innerHTML = '';
@@ -533,7 +531,7 @@
         let boughtItems = products.filter(p => p.isSelected && p.isBought);
         
         if(activeItems.length === 0 && boughtItems.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה ריקה 🎉</div>';
+            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">אין מוצרים ברשימה 🎉</div>';
             return;
         }
 
@@ -626,7 +624,7 @@
             alert('הוספו ' + count + ' מוצרים לרשימת התכנון');
             switchTab('catalog');
         } else {
-            alert('כל המוצרים הקבועים (המסומנים בכוכבית) כבר נמצאים בתכנון');
+            alert('כל המוצרים הקבועים כבר נמצאים בתכנון');
         }
     }
 
@@ -676,7 +674,7 @@
     function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
     function handleModalSave() {
-        const name = document.getElementById('modal-name-input').value;
+        const name = document.getElementById('modal-name-input').value.trim();
         const cat = document.getElementById('modal-category-input').value;
         if(!name) return;
 
@@ -684,8 +682,21 @@
             const p = products.find(x => x.id === currentEditId);
             p.name = name; p.category = cat;
         } else {
-            if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
-            products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false, qty: 1, isBase: false });
+            // בדיקה האם קיים כבר
+            const existing = products.find(x => x.name === name);
+            if(existing) {
+                if(existing.isBase && !existing.isSelected) {
+                    // אם קיים כבסיס מוסתר - נחשוף אותו
+                    existing.isSelected = true;
+                    alert('המוצר קיים בקבועים - הוספתי אותו לרשימה');
+                } else {
+                    alert('המוצר כבר קיים ברשימה');
+                    return;
+                }
+            } else {
+                // חדש לגמרי
+                products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false, qty: 1, isBase: false });
+            }
         }
         saveToDrive();
         closeModal();
@@ -701,23 +712,15 @@
         }
     }
 
-    // --- לוגיקת איפוס מתוחכמת (3.5) ---
+    // --- לוגיקת איפוס חכמה (3.8) ---
     function resetPlanningList() {
-        if(confirm('האם לנקות את רשימת הקניות? (מוצרים קבועים יישמרו, חד-פעמיים יימחקו)')) {
-            // סינון המוצרים:
-            // שומרים רק את מי ש:
-            // 1. לא נבחר (isSelected=false) - אלה מוצרים שסתם במאגר
-            // 2. או שהוא מסומן כ"קבוע" (isBase=true) - אותם אסור למחוק, רק לאפס סימון
+        if(confirm('האם לנקות את רשימת הקניות? (מוצרים זמניים יימחקו, קבועים רק יוסתרו)')) {
             
-            // מוצרים שהם גם נבחרו (isSelected=true) וגם לא קבועים (isBase=false) -> יימחקו מהמערך!
-            
-            products = products.filter(p => {
-                if (!p.isSelected) return true; // אם לא נבחר בכלל, תמיד נשאר (נמצא במאגר)
-                if (p.isBase) return true;      // אם קבוע, תמיד נשאר
-                return false;                   // נבחר + לא קבוע = למחוק
-            });
+            // 1. משאירים רק את המוצרים הקבועים (isBase)
+            //    כל מוצר שהוא לא Base - נמחק מהמערך.
+            products = products.filter(p => p.isBase === true);
 
-            // איפוס הסימונים למי שנשאר
+            // 2. מאפסים את הסימונים של הקבועים שנשארו (כדי להסתיר אותם מהתכנון)
             products.forEach(p => {
                 p.isSelected = false;
                 p.isBought = false;
