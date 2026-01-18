@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 3.8</title>
+    <title>SuperList Pro 3.9</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -475,7 +475,7 @@
     function renderBaseList() {
         const container = document.getElementById('base-list-container');
         container.innerHTML = '';
-        const baseItems = products.filter(p => p.isBase); // מסנן רק בסיסיים
+        const baseItems = products.filter(p => p.isBase); 
         
         renderGroupedList(container, baseItems, (p) => {
             return `
@@ -488,19 +488,36 @@
         });
     }
 
-    // 2. טאב תכנון - מציג:
-    //    א. מוצרים שהם לא Base (חד פעמיים)
-    //    ב. מוצרים שהם Base וגם נבחרו (isSelected)
-    //    ג. מסתיר Base שלא נבחרו
+    // 2. טאב תכנון - מציג הכל (כי זמני נמחק בניקוי, וקבוע נשמר)
+    // התיקון: אנחנו מציגים רק אם:
+    // א. isBase=true (תמיד מוצג, אבל מסומן רק אם נבחר)
+    // ב. isSelected=true (אם זה זמני)
+    // למעשה הלוגיקה שלך היא: זמני שלא נבחר - נמחק. אז כל מה שקיים ואינו בסיס הוא נבחר.
+    
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
         
-        // לוגיקת הסינון החדשה:
+        // אנחנו מציגים את כל מה שנמצא כרגע במערך והוא לא "בסיס מוסתר".
+        // אבל רגע, אם לחצת "נקה", הזמניים נמחקו. אז מה שנשאר זה רק הבסיסיים (חלקם אולי מסומנים, חלקם לא).
+        // והזמניים החדשים שתוסיף יופיעו כאן.
+        
+        // נציג הכל, למעט בסיסיים שלא נבחרו? לא, אתה רוצה לראות את הבסיסיים כדי לסמן אותם.
+        // אז נציג הכל. אבל נפריד ויזואלית? לא, זה אותו דבר.
+        
+        // הלוגיקה הקודמת היתה להסתיר בסיסיים לא מסומנים.
+        // עכשיו אתה רוצה לראות הכל? או רק מה שרלוונטי?
+        // נשאר עם הלוגיקה: מציגים זמניים (תמיד) + בסיסיים (רק אם נבחרו).
+        // *תיקון:* אם תרצה להוסיף בסיסיים - תעשה את זה מהטאב "קבועים".
+        // אז בטאב הזה נציג רק את מה ש"פעיל" (isSelected) או שהוא זמני?
+        
+        // בוא נחזור לפשטות: טאב תכנון מציג את מה ש *אמור להירכש*.
+        // כלומר products.filter(p => !p.isBase || p.isSelected)
+        
         const planningItems = products.filter(p => !p.isBase || p.isSelected);
 
         if(planningItems.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה נקייה. הוסף מוצרים או טען מקבועים.</div>';
+            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה ריקה.<br>הוסף מוצרים ב"+" או ייבא מ"קבועים".</div>';
             return;
         }
 
@@ -673,30 +690,33 @@
     
     function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
+    // תיקון: הוספה חכמה לפי הטאב הפעיל
     function handleModalSave() {
-        const name = document.getElementById('modal-name-input').value.trim();
+        const name = document.getElementById('modal-name-input').value;
         const cat = document.getElementById('modal-category-input').value;
         if(!name) return;
+
+        // בדיקת טאב פעיל
+        const activeTab = document.querySelector('.tab.active').innerText;
+        const isBaseTab = activeTab.includes('קבועים');
 
         if(currentEditId) {
             const p = products.find(x => x.id === currentEditId);
             p.name = name; p.category = cat;
         } else {
-            // בדיקה האם קיים כבר
-            const existing = products.find(x => x.name === name);
-            if(existing) {
-                if(existing.isBase && !existing.isSelected) {
-                    // אם קיים כבסיס מוסתר - נחשוף אותו
-                    existing.isSelected = true;
-                    alert('המוצר קיים בקבועים - הוספתי אותו לרשימה');
-                } else {
-                    alert('המוצר כבר קיים ברשימה');
-                    return;
-                }
-            } else {
-                // חדש לגמרי
-                products.push({ id: Date.now(), name: name, category: cat, isSelected: true, isBought: false, qty: 1, isBase: false });
-            }
+            if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
+            
+            // אם אנחנו בטאב קבועים - נוסיף כבסיס (לא מסומן לתכנון)
+            // אם בטאב אחר - נוסיף כתכנון (זמני)
+            products.push({ 
+                id: Date.now(), 
+                name: name, 
+                category: cat, 
+                isSelected: !isBaseTab, 
+                isBought: false, 
+                qty: 1, 
+                isBase: isBaseTab 
+            });
         }
         saveToDrive();
         closeModal();
@@ -712,9 +732,9 @@
         }
     }
 
-    // --- לוגיקת איפוס חכמה (3.8) ---
+    // --- לוגיקת איפוס מתוקנת (3.9) ---
     function resetPlanningList() {
-        if(confirm('האם לנקות את רשימת הקניות? (מוצרים זמניים יימחקו, קבועים רק יוסתרו)')) {
+        if(confirm('האם לנקות את הרשימה? (מוצרים זמניים יימחקו, קבועים רק יוסתרו)')) {
             
             // 1. משאירים רק את המוצרים הקבועים (isBase)
             //    כל מוצר שהוא לא Base - נמחק מהמערך.
