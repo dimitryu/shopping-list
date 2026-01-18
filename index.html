@@ -239,19 +239,28 @@
         }
     }
 
-    function handleAuthClick() {
+//    function handleAuthClick() {
+//        tokenClient.callback = async (resp) => {
+//            if (resp.error) throw resp;
+//            showApp();
+//            await findOrCreateFile();
+//        };
+//        if (gapi.client.getToken() === null) {
+//            tokenClient.requestAccessToken({prompt: 'consent'});
+//       } else {
+//            tokenClient.requestAccessToken({prompt: ''});
+//        }
+//    }
+
+	function handleAuthClick() {
         tokenClient.callback = async (resp) => {
             if (resp.error) throw resp;
             showApp();
             await findOrCreateFile();
         };
-        if (gapi.client.getToken() === null) {
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        } else {
-            tokenClient.requestAccessToken({prompt: ''});
-        }
+        tokenClient.requestAccessToken({prompt: ''});
     }
-
+	
     function handleSignoutClick() {
         const token = gapi.client.getToken();
         if (token !== null) {
@@ -772,3 +781,4 @@
 </script>
 </body>
 </html>
+
