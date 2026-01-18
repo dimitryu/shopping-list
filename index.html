@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 4.0</title>
+    <title>SuperList Pro 4.1</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -54,7 +54,6 @@
         .checkbox.checked { background-color: var(--success-color); border-color: var(--success-color); }
         .checkbox.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
         
-        /* Star Styling Updated */
         .star-check { width: 28px; height: 28px; font-size: 26px; color: var(--star-inactive); display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
         .star-check.active { color: var(--star-color); text-shadow: 0 2px 5px rgba(241, 196, 15, 0.4); }
 
@@ -178,6 +177,10 @@
             <option value="לחם ומאפים">לחם ומאפים 🍞</option>
             <option value="בשר ודגים">בשר ודגים 🥩</option>
             <option value="מזווה ובישול">מזווה ובישול 🍝</option>
+            <option value="שימורים">שימורים 🥫</option>
+            <option value="חטיפים וממתקים">חטיפים וממתקים 🍫</option>
+            <option value="משקאות קלים">משקאות קלים 🥤</option>
+            <option value="אלכוהול">אלכוהול 🍷</option>
             <option value="ניקיון ובית">ניקיון ובית 🧹</option>
         </select>
         <button class="modal-btn save-btn" onclick="handleModalSave()">שמור</button>
@@ -306,7 +309,6 @@
     }
 
     function initializeDefaultData() {
-        // רשימת בסיס - isStarred (במקום b) מסמן אם זה מועדף
         const rawItems = [
             { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", fav: true },
             { n: "קוטג' 5%", c: "מוצרי חלב וביצים", fav: true },
@@ -316,6 +318,7 @@
             { n: "חמאה", c: "מוצרי חלב וביצים", fav: true },
             { n: "מילקי", c: "מוצרי חלב וביצים", fav: true },
             { n: "שמנת מתוקה", c: "מוצרי חלב וביצים", fav: true },
+            
             { n: "מלפפונים", c: "ירקות ופירות", fav: true },
             { n: "עגבניות", c: "ירקות ופירות", fav: true },
             { n: "בצל יבש", c: "ירקות ופירות", fav: true },
@@ -324,8 +327,10 @@
             { n: "בננות", c: "ירקות ופירות", fav: true },
             { n: "לימון", c: "ירקות ופירות", fav: true },
             { n: "חסה", c: "ירקות ופירות", fav: false },
+            
             { n: "לחם פרוס", c: "לחם ומאפים", fav: true },
             { n: "פיתות", c: "לחם ומאפים", fav: true },
+            
             { n: "קפה נמס (טייסטרס)", c: "מזווה ובישול", fav: true },
             { n: "קפה שחור טורקי", c: "מזווה ובישול", fav: false },
             { n: "סוכר", c: "מזווה ובישול", fav: true },
@@ -333,18 +338,32 @@
             { n: "שמן זית", c: "מזווה ובישול", fav: true },
             { n: "פסטה", c: "מזווה ובישול", fav: true },
             { n: "אורז", c: "מזווה ובישול", fav: true },
-            { n: "שימורי טונה", c: "מזווה ובישול", fav: true },
             { n: "רסק עגבניות", c: "מזווה ובישול", fav: true },
-            { n: "חומוס אחלה/צבר", c: "מזווה ובישול", fav: true },
+            { n: "חומוס אחלה/צבר", c: "שימורים", fav: true }, // העברתי לשימורים? לא, זה מקרר. אבל חומוס בקופסה? נשאיר מזווה או נעביר
             { n: "טחינה גולמית", c: "מזווה ובישול", fav: false },
-            { n: "במבה", c: "מזווה ובישול", fav: true },
-            { n: "ביסלי", c: "מזווה ובישול", fav: false },
-            { n: "קורנפלקס (דגני בוקר)", c: "מזווה ובישול", fav: true },
+            { n: "קורנפלקס", c: "מזווה ובישול", fav: true },
+
+            { n: "שימורי טונה", c: "שימורים", fav: true },
+            { n: "מלפפון חמוץ", c: "שימורים", fav: true },
+            { n: "תירס שימורים", c: "שימורים", fav: true },
+
+            { n: "במבה", c: "חטיפים וממתקים", fav: true },
+            { n: "ביסלי", c: "חטיפים וממתקים", fav: false },
+            { n: "שוקולד פרה", c: "חטיפים וממתקים", fav: true },
+
+            { n: "קולה זירו", c: "משקאות קלים", fav: true },
+            { n: "מים מינרלים", c: "משקאות קלים", fav: true },
+            { n: "מיץ תפוזים", c: "משקאות קלים", fav: false },
+
+            { n: "יין אדום", c: "אלכוהול", fav: false },
+            { n: "שישיית בירה", c: "אלכוהול", fav: false },
+
             { n: "נייר טואלט", c: "ניקיון ובית", fav: true },
             { n: "מגבות נייר", c: "ניקיון ובית", fav: true },
             { n: "נוזל כלים", c: "ניקיון ובית", fav: true },
             { n: "שקיות זבל", c: "ניקיון ובית", fav: false },
             { n: "שמפו", c: "ניקיון ובית", fav: false },
+            
             { n: "חזה עוף / שניצל", c: "בשר ודגים", fav: false },
             { n: "בשר טחון", c: "בשר ודגים", fav: false }
         ];
@@ -353,9 +372,9 @@
             id: Date.now() + index,
             name: item.n,
             category: item.c,
-            isBase: true, // כולם קבועים במאגר
-            isStarred: item.fav, // הכוכב מסמן "מועדף להעברה"
-            isSelected: false, // לא בתכנון עדיין
+            isBase: true, 
+            isStarred: item.fav, 
+            isSelected: false, 
             isBought: false,
             qty: 1
         }));
@@ -368,11 +387,10 @@
             products = response.result || [];
             if (typeof products !== 'object') products = [];
             
-            // שדרוג נתונים ישנים לגרסה 4.0
             products.forEach(p => { 
                 if(!p.qty) p.qty = 1; 
-                if(p.isBase === undefined) p.isBase = true; // כולם הופכים לבסיס
-                if(p.isStarred === undefined) p.isStarred = false; // ברירת מחדל
+                if(p.isBase === undefined) p.isBase = true;
+                if(p.isStarred === undefined) p.isStarred = false; 
             });
 
             refreshView();
@@ -406,7 +424,10 @@
     }
 
     // --- App Logic ---
-    const CATEGORIES = ["ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", "ניקיון ובית", "כללי"];
+    const CATEGORIES = [
+        "ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", 
+        "שימורים", "חטיפים וממתקים", "משקאות קלים", "אלכוהול", "ניקיון ובית", "כללי"
+    ];
 
     function refreshView() {
         const activeTab = document.querySelector('.tab.active').innerText;
@@ -480,7 +501,6 @@
     }
 
     // 1. טאב קבועים - מציג הכל (isBase=true)
-    // הכוכב רק מסמן (isStarred)
     function renderBaseList() {
         const container = document.getElementById('base-list-container');
         container.innerHTML = '';
@@ -606,7 +626,6 @@
 
     // --- Actions ---
 
-    // פעולת הכוכב בטאב קבועים - רק מסמנת, לא מוחקת
     function toggleStar(id) {
         const p = products.find(x => x.id === id);
         if(p) { p.isStarred = !p.isStarred; saveToDrive(); refreshView(); }
@@ -617,7 +636,6 @@
         if(p) { p.isSelected = !p.isSelected; if(!p.isSelected) p.isBought = false; saveToDrive(); refreshView(); }
     }
 
-    // הכפתור בטאב קבועים: לוקח את המסומנים (isStarred) ומעביר לתכנון (isSelected)
     function addBaseToPlan() {
         let count = 0;
         products.forEach(p => {
@@ -690,17 +708,21 @@
         } else {
             if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
             
-            // הוספה אוטומטית לקבועים (isBase=true) אך בלי כוכב (isStarred=false)
-            // נכנס לתכנון (isSelected=true)
+            // הוספה: תמיד קבוע (isBase=true), תמיד בלי כוכב (isStarred=false).
+            // אם אנחנו בטאב תכנון/קניה -> נסמן ב-V.
+            // אם בטאב קבועים -> לא נסמן ב-V.
+            const activeTab = document.querySelector('.tab.active').innerText;
+            const selectForPlan = !activeTab.includes('קבועים');
+
             products.push({ 
                 id: Date.now(), 
                 name: name, 
                 category: cat, 
-                isSelected: true, // לתכנון
+                isSelected: selectForPlan, 
                 isBought: false, 
                 qty: 1, 
-                isBase: true,     // לקבועים
-                isStarred: false  // בלי כוכב
+                isBase: true,     
+                isStarred: false  
             });
         }
         saveToDrive();
