@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 3.9</title>
+    <title>SuperList Pro 4.0</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -15,6 +15,7 @@
             --card-bg: #ffffff;
             --cart-header-bg: #e0e0e0;
             --star-color: #f1c40f;
+            --star-inactive: #e0e0e0;
             --header-bg: #4285F4;
         }
 
@@ -53,8 +54,9 @@
         .checkbox.checked { background-color: var(--success-color); border-color: var(--success-color); }
         .checkbox.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
         
-        .star-check { width: 24px; height: 24px; font-size: 24px; color: #ddd; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .star-check.active { color: var(--star-color); }
+        /* Star Styling Updated */
+        .star-check { width: 28px; height: 28px; font-size: 26px; color: var(--star-inactive); display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
+        .star-check.active { color: var(--star-color); text-shadow: 0 2px 5px rgba(241, 196, 15, 0.4); }
 
         .qty-control { display: flex; align-items: center; background: #f0f2f5; border-radius: 8px; padding: 2px; margin-left: 10px; }
         .qty-btn { width: 26px; height: 26px; border: none; background: white; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -133,10 +135,10 @@
         <div id="view-base" class="content hidden">
             <div class="actions-bar">
                 <button class="action-btn btn-add-base" onclick="addBaseToPlan()">
-                    📥 הכנס רשימה התחלתית לתכנון
+                    📥 הכנס מוצרים מסומנים (★) לתכנון
                 </button>
             </div>
-            <p style="text-align:center; color:#888; font-size:0.9em;">סמן בכוכב מוצרים שאתה קונה באופן קבוע</p>
+            <p style="text-align:center; color:#888; font-size:0.9em;">לחיצה על כוכב מסמנת להעברה. הורדה לא מוחקת.</p>
             <div id="base-list-container"></div>
         </div>
 
@@ -266,7 +268,6 @@
         document.getElementById('app-content').classList.remove('hidden');
     }
 
-    // --- Drive Logic ---
     async function findOrCreateFile() {
         document.getElementById('status-msg').innerText = 'מסנכרן...';
         try {
@@ -305,55 +306,56 @@
     }
 
     function initializeDefaultData() {
-        // ישראל טופ 30
+        // רשימת בסיס - isStarred (במקום b) מסמן אם זה מועדף
         const rawItems = [
-            { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", b: true },
-            { n: "קוטג' 5%", c: "מוצרי חלב וביצים", b: true },
-            { n: "גבינה לבנה 5%", c: "מוצרי חלב וביצים", b: true },
-            { n: "גבינה צהובה עמק", c: "מוצרי חלב וביצים", b: true },
-            { n: "ביצים L (תבנית)", c: "מוצרי חלב וביצים", b: true },
-            { n: "חמאה", c: "מוצרי חלב וביצים", b: true },
-            { n: "מילקי", c: "מוצרי חלב וביצים", b: true },
-            { n: "שמנת מתוקה", c: "מוצרי חלב וביצים", b: true },
-            { n: "מלפפונים", c: "ירקות ופירות", b: true },
-            { n: "עגבניות", c: "ירקות ופירות", b: true },
-            { n: "בצל יבש", c: "ירקות ופירות", b: true },
-            { n: "תפוחי אדמה", c: "ירקות ופירות", b: true },
-            { n: "גזר", c: "ירקות ופירות", b: false },
-            { n: "בננות", c: "ירקות ופירות", b: true },
-            { n: "לימון", c: "ירקות ופירות", b: true },
-            { n: "חסה", c: "ירקות ופירות", b: false },
-            { n: "לחם פרוס", c: "לחם ומאפים", b: true },
-            { n: "פיתות", c: "לחם ומאפים", b: true },
-            { n: "קפה נמס (טייסטרס)", c: "מזווה ובישול", b: true },
-            { n: "קפה שחור טורקי", c: "מזווה ובישול", b: false },
-            { n: "סוכר", c: "מזווה ובישול", b: true },
-            { n: "שמן קנולה/חמניות", c: "מזווה ובישול", b: true },
-            { n: "שמן זית", c: "מזווה ובישול", b: true },
-            { n: "פסטה", c: "מזווה ובישול", b: true },
-            { n: "אורז", c: "מזווה ובישול", b: true },
-            { n: "שימורי טונה", c: "מזווה ובישול", b: true },
-            { n: "רסק עגבניות", c: "מזווה ובישול", b: true },
-            { n: "חומוס אחלה/צבר", c: "מזווה ובישול", b: true },
-            { n: "טחינה גולמית", c: "מזווה ובישול", b: false },
-            { n: "במבה", c: "מזווה ובישול", b: true },
-            { n: "ביסלי", c: "מזווה ובישול", b: false },
-            { n: "קורנפלקס (דגני בוקר)", c: "מזווה ובישול", b: true },
-            { n: "נייר טואלט", c: "ניקיון ובית", b: true },
-            { n: "מגבות נייר", c: "ניקיון ובית", b: true },
-            { n: "נוזל כלים", c: "ניקיון ובית", b: true },
-            { n: "שקיות זבל", c: "ניקיון ובית", b: false },
-            { n: "שמפו", c: "ניקיון ובית", b: false },
-            { n: "חזה עוף / שניצל", c: "בשר ודגים", b: false },
-            { n: "בשר טחון", c: "בשר ודגים", b: false }
+            { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", fav: true },
+            { n: "קוטג' 5%", c: "מוצרי חלב וביצים", fav: true },
+            { n: "גבינה לבנה 5%", c: "מוצרי חלב וביצים", fav: true },
+            { n: "גבינה צהובה עמק", c: "מוצרי חלב וביצים", fav: true },
+            { n: "ביצים L (תבנית)", c: "מוצרי חלב וביצים", fav: true },
+            { n: "חמאה", c: "מוצרי חלב וביצים", fav: true },
+            { n: "מילקי", c: "מוצרי חלב וביצים", fav: true },
+            { n: "שמנת מתוקה", c: "מוצרי חלב וביצים", fav: true },
+            { n: "מלפפונים", c: "ירקות ופירות", fav: true },
+            { n: "עגבניות", c: "ירקות ופירות", fav: true },
+            { n: "בצל יבש", c: "ירקות ופירות", fav: true },
+            { n: "תפוחי אדמה", c: "ירקות ופירות", fav: true },
+            { n: "גזר", c: "ירקות ופירות", fav: false },
+            { n: "בננות", c: "ירקות ופירות", fav: true },
+            { n: "לימון", c: "ירקות ופירות", fav: true },
+            { n: "חסה", c: "ירקות ופירות", fav: false },
+            { n: "לחם פרוס", c: "לחם ומאפים", fav: true },
+            { n: "פיתות", c: "לחם ומאפים", fav: true },
+            { n: "קפה נמס (טייסטרס)", c: "מזווה ובישול", fav: true },
+            { n: "קפה שחור טורקי", c: "מזווה ובישול", fav: false },
+            { n: "סוכר", c: "מזווה ובישול", fav: true },
+            { n: "שמן קנולה/חמניות", c: "מזווה ובישול", fav: true },
+            { n: "שמן זית", c: "מזווה ובישול", fav: true },
+            { n: "פסטה", c: "מזווה ובישול", fav: true },
+            { n: "אורז", c: "מזווה ובישול", fav: true },
+            { n: "שימורי טונה", c: "מזווה ובישול", fav: true },
+            { n: "רסק עגבניות", c: "מזווה ובישול", fav: true },
+            { n: "חומוס אחלה/צבר", c: "מזווה ובישול", fav: true },
+            { n: "טחינה גולמית", c: "מזווה ובישול", fav: false },
+            { n: "במבה", c: "מזווה ובישול", fav: true },
+            { n: "ביסלי", c: "מזווה ובישול", fav: false },
+            { n: "קורנפלקס (דגני בוקר)", c: "מזווה ובישול", fav: true },
+            { n: "נייר טואלט", c: "ניקיון ובית", fav: true },
+            { n: "מגבות נייר", c: "ניקיון ובית", fav: true },
+            { n: "נוזל כלים", c: "ניקיון ובית", fav: true },
+            { n: "שקיות זבל", c: "ניקיון ובית", fav: false },
+            { n: "שמפו", c: "ניקיון ובית", fav: false },
+            { n: "חזה עוף / שניצל", c: "בשר ודגים", fav: false },
+            { n: "בשר טחון", c: "בשר ודגים", fav: false }
         ];
 
         return rawItems.map((item, index) => ({
             id: Date.now() + index,
             name: item.n,
             category: item.c,
-            isBase: item.b,
-            isSelected: false,
+            isBase: true, // כולם קבועים במאגר
+            isStarred: item.fav, // הכוכב מסמן "מועדף להעברה"
+            isSelected: false, // לא בתכנון עדיין
             isBought: false,
             qty: 1
         }));
@@ -365,7 +367,14 @@
             const response = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
             products = response.result || [];
             if (typeof products !== 'object') products = [];
-            products.forEach(p => { if(!p.qty) p.qty = 1; if(p.isBase === undefined) p.isBase = false; });
+            
+            // שדרוג נתונים ישנים לגרסה 4.0
+            products.forEach(p => { 
+                if(!p.qty) p.qty = 1; 
+                if(p.isBase === undefined) p.isBase = true; // כולם הופכים לבסיס
+                if(p.isStarred === undefined) p.isStarred = false; // ברירת מחדל
+            });
+
             refreshView();
             document.getElementById('status-msg').innerText = 'מעודכן ✅';
         } catch (err) {
@@ -432,7 +441,6 @@
         refreshView();
     }
 
-    // פונקציית עזר לרינדור קבוצות (משותפת לכל הטאבים)
     function renderGroupedList(container, itemList, itemTemplateFunc) {
         const groups = {};
         CATEGORIES.forEach(c => groups[c] = []);
@@ -471,16 +479,17 @@
         });
     }
 
-    // 1. טאב קבועים - מציג רק isBase
+    // 1. טאב קבועים - מציג הכל (isBase=true)
+    // הכוכב רק מסמן (isStarred)
     function renderBaseList() {
         const container = document.getElementById('base-list-container');
         container.innerHTML = '';
-        const baseItems = products.filter(p => p.isBase); 
+        const baseItems = products.filter(p => p.isBase);
         
         renderGroupedList(container, baseItems, (p) => {
             return `
-                <div class="item-main" onclick="toggleBase(${p.id})">
-                    <div class="star-check ${p.isBase ? 'active' : ''}">★</div>
+                <div class="item-main" onclick="toggleStar(${p.id})">
+                    <div class="star-check ${p.isStarred ? 'active' : ''}">★</div>
                     <span>${p.name}</span>
                 </div>
                 <button onclick="openEditModal(${p.id})" style="border:none; background:none; cursor:pointer; font-size:18px; color:#ccc; margin-right:5px;">✎</button>
@@ -488,36 +497,15 @@
         });
     }
 
-    // 2. טאב תכנון - מציג הכל (כי זמני נמחק בניקוי, וקבוע נשמר)
-    // התיקון: אנחנו מציגים רק אם:
-    // א. isBase=true (תמיד מוצג, אבל מסומן רק אם נבחר)
-    // ב. isSelected=true (אם זה זמני)
-    // למעשה הלוגיקה שלך היא: זמני שלא נבחר - נמחק. אז כל מה שקיים ואינו בסיס הוא נבחר.
-    
+    // 2. טאב תכנון - מציג את מה שנבחר (isSelected)
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
         
-        // אנחנו מציגים את כל מה שנמצא כרגע במערך והוא לא "בסיס מוסתר".
-        // אבל רגע, אם לחצת "נקה", הזמניים נמחקו. אז מה שנשאר זה רק הבסיסיים (חלקם אולי מסומנים, חלקם לא).
-        // והזמניים החדשים שתוסיף יופיעו כאן.
-        
-        // נציג הכל, למעט בסיסיים שלא נבחרו? לא, אתה רוצה לראות את הבסיסיים כדי לסמן אותם.
-        // אז נציג הכל. אבל נפריד ויזואלית? לא, זה אותו דבר.
-        
-        // הלוגיקה הקודמת היתה להסתיר בסיסיים לא מסומנים.
-        // עכשיו אתה רוצה לראות הכל? או רק מה שרלוונטי?
-        // נשאר עם הלוגיקה: מציגים זמניים (תמיד) + בסיסיים (רק אם נבחרו).
-        // *תיקון:* אם תרצה להוסיף בסיסיים - תעשה את זה מהטאב "קבועים".
-        // אז בטאב הזה נציג רק את מה ש"פעיל" (isSelected) או שהוא זמני?
-        
-        // בוא נחזור לפשטות: טאב תכנון מציג את מה ש *אמור להירכש*.
-        // כלומר products.filter(p => !p.isBase || p.isSelected)
-        
-        const planningItems = products.filter(p => !p.isBase || p.isSelected);
+        const planningItems = products.filter(p => p.isSelected);
 
         if(planningItems.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה ריקה.<br>הוסף מוצרים ב"+" או ייבא מ"קבועים".</div>';
+            container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה ריקה.<br>הוסף ב"+" או ייבא מ"קבועים".</div>';
             return;
         }
 
@@ -618,20 +606,22 @@
 
     // --- Actions ---
 
+    // פעולת הכוכב בטאב קבועים - רק מסמנת, לא מוחקת
+    function toggleStar(id) {
+        const p = products.find(x => x.id === id);
+        if(p) { p.isStarred = !p.isStarred; saveToDrive(); refreshView(); }
+    }
+
     function toggleSelect(id) {
         const p = products.find(x => x.id === id);
         if(p) { p.isSelected = !p.isSelected; if(!p.isSelected) p.isBought = false; saveToDrive(); refreshView(); }
     }
 
-    function toggleBase(id) {
-        const p = products.find(x => x.id === id);
-        if(p) { p.isBase = !p.isBase; saveToDrive(); refreshView(); }
-    }
-
+    // הכפתור בטאב קבועים: לוקח את המסומנים (isStarred) ומעביר לתכנון (isSelected)
     function addBaseToPlan() {
         let count = 0;
         products.forEach(p => {
-            if (p.isBase === true && !p.isSelected) {
+            if (p.isStarred && !p.isSelected) {
                 p.isSelected = true;
                 count++;
             }
@@ -641,7 +631,7 @@
             alert('הוספו ' + count + ' מוצרים לרשימת התכנון');
             switchTab('catalog');
         } else {
-            alert('כל המוצרים הקבועים כבר נמצאים בתכנון');
+            alert('כל המוצרים המסומנים כבר נמצאים בתכנון');
         }
     }
 
@@ -668,7 +658,6 @@
         if(p) { p.qty = val; saveToDrive(); }
     }
 
-    // Modal Logic
     let currentEditId = null;
     function openAddModal() { 
         currentEditId = null; 
@@ -690,15 +679,10 @@
     
     function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
-    // תיקון: הוספה חכמה לפי הטאב הפעיל
     function handleModalSave() {
         const name = document.getElementById('modal-name-input').value;
         const cat = document.getElementById('modal-category-input').value;
         if(!name) return;
-
-        // בדיקת טאב פעיל
-        const activeTab = document.querySelector('.tab.active').innerText;
-        const isBaseTab = activeTab.includes('קבועים');
 
         if(currentEditId) {
             const p = products.find(x => x.id === currentEditId);
@@ -706,16 +690,17 @@
         } else {
             if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
             
-            // אם אנחנו בטאב קבועים - נוסיף כבסיס (לא מסומן לתכנון)
-            // אם בטאב אחר - נוסיף כתכנון (זמני)
+            // הוספה אוטומטית לקבועים (isBase=true) אך בלי כוכב (isStarred=false)
+            // נכנס לתכנון (isSelected=true)
             products.push({ 
                 id: Date.now(), 
                 name: name, 
                 category: cat, 
-                isSelected: !isBaseTab, 
+                isSelected: true, // לתכנון
                 isBought: false, 
                 qty: 1, 
-                isBase: isBaseTab 
+                isBase: true,     // לקבועים
+                isStarred: false  // בלי כוכב
             });
         }
         saveToDrive();
@@ -724,7 +709,7 @@
     }
 
     function deleteItem() {
-        if(currentEditId && confirm('למחוק לצמיתות?')) {
+        if(currentEditId && confirm('למחוק לצמיתות מהמאגר?')) {
             products = products.filter(x => x.id !== currentEditId);
             saveToDrive();
             closeModal();
@@ -732,21 +717,14 @@
         }
     }
 
-    // --- לוגיקת איפוס מתוקנת (3.9) ---
+    // ניקוי תכנון: משאיר במאגר (isBase=true) אבל מסיר בחירה (isSelected=false)
     function resetPlanningList() {
-        if(confirm('האם לנקות את הרשימה? (מוצרים זמניים יימחקו, קבועים רק יוסתרו)')) {
-            
-            // 1. משאירים רק את המוצרים הקבועים (isBase)
-            //    כל מוצר שהוא לא Base - נמחק מהמערך.
-            products = products.filter(p => p.isBase === true);
-
-            // 2. מאפסים את הסימונים של הקבועים שנשארו (כדי להסתיר אותם מהתכנון)
+        if(confirm('האם לנקות את הרשימה? (המוצרים יישמרו ב"קבועים")')) {
             products.forEach(p => {
                 p.isSelected = false;
                 p.isBought = false;
                 p.qty = 1;
             });
-
             saveToDrive();
             refreshView();
         }
