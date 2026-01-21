@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 4.3 - Multi User</title>
+    <title>SuperList Pro 4.4</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -45,6 +45,11 @@
         .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; }
         .tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.9rem; }
         .tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); background: #f8faff; }
+
+        /* Search Bar Style */
+        .search-container { padding: 10px; background: #fff; border-bottom: 1px solid #eee; }
+        #search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
+        #search-input:focus { border-color: var(--primary-color); }
         
         .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; background: white; }
         .item:active { background-color: #f5f5f5; }
@@ -58,20 +63,10 @@
         .star-check.active { color: var(--star-color); text-shadow: 0 2px 5px rgba(241, 196, 15, 0.4); }
 
         /* User Badge Style */
-        .user-badge {
-            font-size: 10px;
-            background-color: #e0e0e0;
-            color: #555;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: -5px; /* קצת חפיפה לשם */
-            border: 1px solid #fff;
-        }
+        .user-badge { font-size: 10px; background-color: #e0e0e0; color: #555; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: -5px; border: 1px solid #fff; }
+        
+        /* Base indicator in Planning List */
+        .base-indicator { font-size: 14px; color: var(--star-color); margin-left: 4px; }
 
         .qty-control { display: flex; align-items: center; background: #f0f2f5; border-radius: 8px; padding: 2px; margin-left: 10px; }
         .qty-btn { width: 26px; height: 26px; border: none; background: white; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -82,10 +77,7 @@
         .item.bought .checkbox { background-color: #ddd; border-color: #ddd; }
         .item.bought .qty-control { opacity: 0.5; pointer-events: none; }
 
-        .category-header { 
-            background-color: #e8f0fe; color: var(--primary-color); padding: 10px 12px; margin-top: 15px; margin-bottom: 5px; 
-            border-radius: 8px; font-weight: bold; font-size: 0.95em; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;
-        }
+        .category-header { background-color: #e8f0fe; color: var(--primary-color); padding: 10px 12px; margin-top: 15px; margin-bottom: 5px; border-radius: 8px; font-weight: bold; font-size: 0.95em; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
         .category-header:hover { background-color: #dbe8fc; }
         .arrow-icon { transition: transform 0.2s; font-size: 0.8em; }
         .arrow-icon.closed { transform: rotate(90deg); }
@@ -152,6 +144,10 @@
             <div class="tab active" onclick="switchTab('catalog')">🏠 תכנון</div>
             <div class="tab" onclick="switchTab('shopping')">🏃 קניה</div>
         </div>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="🔍 חפש מוצר..." onkeyup="handleSearch(this.value)">
+        </div>
     </div>
 
     <div id="app-content" class="hidden">
@@ -162,7 +158,7 @@
                     📥 הכנס מוצרים מסומנים (★) לתכנון
                 </button>
             </div>
-            <p style="text-align:center; color:#888; font-size:0.9em;">לחיצה על כוכב מסמנת להעברה. הורדה לא מוחקת.</p>
+            <p style="text-align:center; color:#888; font-size:0.9em;">לחיצה על כוכב מסמנת להעברה.</p>
             <div id="base-list-container"></div>
         </div>
 
@@ -230,7 +226,6 @@
     // ==========================================
 
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    // הוספנו את ה-scope של userinfo.profile כדי לקבל את השם
     const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
     const FILE_NAME = 'superlist_data.json';
     
@@ -240,7 +235,8 @@
     let driveFileId = null;
     let products = [];
     let categoryState = {}; 
-    let currentUserInitial = ''; // משתנה גלובלי לאות המשתמש
+    let currentUserInitial = '';
+    let searchTerm = '';
 
     function gapiLoaded() {
         gapi.load('client', async () => {
@@ -273,22 +269,12 @@
     function handleAuthClick() {
         tokenClient.callback = async (resp) => {
             if (resp.error) throw resp;
-            
-            // --- שלב חדש: קבלת פרטי המשתמש ---
             try {
                 const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                     headers: { 'Authorization': `Bearer ${resp.access_token}` }
                 }).then(res => res.json());
-                
-                if (userInfo.given_name) {
-                    currentUserInitial = userInfo.given_name.charAt(0).toUpperCase();
-                    // אם זה עברית, לוקחים כמו שזה
-                }
-            } catch (error) {
-                console.error("Failed to fetch user info", error);
-            }
-            // ---------------------------------
-
+                if (userInfo.given_name) currentUserInitial = userInfo.given_name.charAt(0).toUpperCase();
+            } catch (error) {}
             showApp();
             await findOrCreateFile();
         };
@@ -353,16 +339,23 @@
     }
 
     function initializeDefaultData() {
-        // רשימה בסיסית - ללא יוצר מוגדר
         const rawItems = [
             { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", fav: true },
             { n: "קוטג' 5%", c: "מוצרי חלב וביצים", fav: true },
             { n: "גבינה לבנה 5%", c: "מוצרי חלב וביצים", fav: true },
             { n: "גבינה צהובה עמק", c: "מוצרי חלב וביצים", fav: true },
             { n: "ביצים L (תבנית)", c: "מוצרי חלב וביצים", fav: true },
+            { n: "חמאה", c: "מוצרי חלב וביצים", fav: true },
+            { n: "מילקי", c: "מוצרי חלב וביצים", fav: true },
+            { n: "שמנת מתוקה", c: "מוצרי חלב וביצים", fav: true },
             { n: "מלפפונים", c: "ירקות ופירות", fav: true },
             { n: "עגבניות", c: "ירקות ופירות", fav: true },
             { n: "בצל יבש", c: "ירקות ופירות", fav: true },
+            { n: "תפוחי אדמה", c: "ירקות ופירות", fav: true },
+            { n: "גזר", c: "ירקות ופירות", fav: false },
+            { n: "בננות", c: "ירקות ופירות", fav: true },
+            { n: "לימון", c: "ירקות ופירות", fav: true },
+            { n: "חסה", c: "ירקות ופירות", fav: false },
             { n: "לחם פרוס", c: "לחם ומאפים", fav: true },
             { n: "פיתות", c: "לחם ומאפים", fav: true },
             { n: "קפה נמס", c: "מזווה ובישול", fav: true },
@@ -381,7 +374,7 @@
             isSelected: false, 
             isBought: false,
             qty: 1,
-            creator: '' // למוצרי מערכת אין יוצר
+            creator: ''
         }));
     }
 
@@ -391,12 +384,10 @@
             const response = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
             products = response.result || [];
             if (typeof products !== 'object') products = [];
-            
             products.forEach(p => { 
                 if(!p.qty) p.qty = 1; 
                 if(p.isBase === undefined) p.isBase = true;
                 if(p.isStarred === undefined) p.isStarred = false; 
-                // אין צורך לאתחל creator, אם אין זה undefined
             });
             refreshView();
             document.getElementById('status-msg').innerText = 'מעודכן ✅';
@@ -437,11 +428,16 @@
         }
     }
 
-    // --- App Logic ---
+    // --- Search & View Logic ---
     const CATEGORIES = [
         "ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", 
         "שימורים", "חטיפים וממתקים", "משקאות קלים", "אלכוהול", "ניקיון ובית", "כללי"
     ];
+
+    function handleSearch(val) {
+        searchTerm = val.toLowerCase();
+        refreshView();
+    }
 
     function refreshView() {
         const activeTab = document.querySelector('.tab.active').innerText;
@@ -451,6 +447,10 @@
     }
 
     function switchTab(tab) {
+        // Reset search when switching tabs
+        document.getElementById('search-input').value = '';
+        searchTerm = '';
+        
         document.getElementById('view-catalog').classList.add('hidden');
         document.getElementById('view-shopping').classList.add('hidden');
         document.getElementById('view-base').classList.add('hidden');
@@ -479,7 +479,11 @@
     function renderGroupedList(container, itemList, itemTemplateFunc) {
         const groups = {};
         CATEGORIES.forEach(c => groups[c] = []);
-        itemList.forEach(p => {
+        
+        // Filter by search term
+        const filteredList = itemList.filter(p => p.name.toLowerCase().includes(searchTerm));
+
+        filteredList.forEach(p => {
             const cat = p.category || 'כללי';
             if(!groups[cat]) groups[cat] = [];
             groups[cat].push(p);
@@ -491,10 +495,7 @@
                 const header = document.createElement('div');
                 header.className = 'category-header';
                 header.onclick = () => toggleCategory(cat);
-                header.innerHTML = `
-                    <span>${cat}</span>
-                    <span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>
-                `;
+                header.innerHTML = `<span>${cat}</span><span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>`;
                 container.appendChild(header);
                 
                 const itemsDiv = document.createElement('div');
@@ -508,7 +509,6 @@
                     div.innerHTML = itemTemplateFunc(p);
                     itemsDiv.appendChild(div);
                 });
-                
                 container.appendChild(itemsDiv);
             }
         });
@@ -531,25 +531,27 @@
         });
     }
 
-    // 2. טאב תכנון - הוספנו את תצוגת האות
+    // 2. טאב תכנון
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
         const planningItems = products.filter(p => p.isSelected);
 
-        if(planningItems.length === 0) {
+        if(planningItems.length === 0 && searchTerm === '') {
             container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה ריקה.<br>הוסף ב"+" או ייבא מ"קבועים".</div>';
             return;
         }
 
         renderGroupedList(container, planningItems, (p) => {
-            // אם יש יוצר (creator) - נציג אותו
             const creatorBadge = p.creator ? `<span class="user-badge">${p.creator}</span>` : '';
+            // כוכב צהוב אם זה מקבועים
+            const baseIndicator = p.isBase ? `<span class="base-indicator">★</span>` : '';
 
             return `
                 <div class="item-main" onclick="toggleSelect(${p.id})">
                     <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
                     ${creatorBadge}
+                    ${baseIndicator}
                     <span>${p.name}</span>
                 </div>
                 <div style="display:flex; align-items:center;">
@@ -577,53 +579,56 @@
         }
 
         const groups = {}; 
-        activeItems.forEach(p => {
-            const cat = p.category || 'כללי';
-            if(!groups[cat]) groups[cat] = [];
-            groups[cat].push(p);
-        });
+        // Logic similar to grouped list but specific for shopping split view
+        // Using common renderer logic is tricky for split view, so keeping separate for now or refactoring if needed.
+        // Let's adapt grouped list logic for shopping view? No, shopping view is split in two.
+        
+        // Render Active
+        const filteredActive = activeItems.filter(p => p.name.toLowerCase().includes(searchTerm));
+        if(filteredActive.length > 0) {
+             // Use simple render for active
+             filteredActive.forEach(p => {
+                 const cat = p.category || 'כללי';
+                 if(!groups[cat]) groups[cat] = [];
+                 groups[cat].push(p);
+             });
+             
+             CATEGORIES.forEach(cat => {
+                if(groups[cat] && groups[cat].length > 0) {
+                    const header = document.createElement('div');
+                    header.className = 'category-header';
+                    header.innerHTML = `<span>${cat}</span>`;
+                    container.appendChild(header);
+                    
+                    groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
+                    groups[cat].forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = `item`;
+                        div.innerHTML = `
+                            <div class="item-main" onclick="toggleBought(${p.id})">
+                                <div class="checkbox"></div>
+                                <span>${p.name}</span>
+                            </div>
+                            <div class="qty-control" style="background:transparent;">
+                                <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+             });
+        }
 
-        CATEGORIES.forEach(cat => {
-            if(groups[cat] && groups[cat].length > 0) {
-                const isCollapsed = categoryState[cat];
-                const header = document.createElement('div');
-                header.className = 'category-header';
-                header.onclick = () => toggleCategory(cat);
-                header.innerHTML = `<span>${cat}</span><span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>`;
-                container.appendChild(header);
-                
-                const itemsDiv = document.createElement('div');
-                itemsDiv.className = `category-items-container ${isCollapsed ? 'closed' : ''}`;
-
-                groups[cat].sort((a,b) => a.name.localeCompare(b.name, 'he'));
-
-                groups[cat].forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = `item`;
-                    div.innerHTML = `
-                        <div class="item-main" onclick="toggleBought(${p.id})">
-                            <div class="checkbox"></div>
-                            <span>${p.name}</span>
-                        </div>
-                        <div class="qty-control" style="background:transparent;">
-                            <span style="font-weight:bold; color:#3367D6;">${p.qty || 1}</span>
-                        </div>
-                    `;
-                    itemsDiv.appendChild(div);
-                });
-                container.appendChild(itemsDiv);
-            }
-        });
-
-        if (boughtItems.length > 0) {
+        // Render Bought
+        const filteredBought = boughtItems.filter(p => p.name.toLowerCase().includes(searchTerm));
+        if (filteredBought.length > 0) {
             const cartHeader = document.createElement('div');
             cartHeader.className = 'category-header cart-header';
             cartHeader.innerText = '🛒 מוצרים בעגלה';
             container.appendChild(cartHeader);
             
-            boughtItems.sort((a,b) => a.name.localeCompare(b.name, 'he'));
-
-            boughtItems.forEach(p => {
+            filteredBought.sort((a,b) => a.name.localeCompare(b.name, 'he'));
+            filteredBought.forEach(p => {
                 const div = document.createElement('div');
                 div.className = `item bought`;
                 div.innerHTML = `
@@ -713,7 +718,6 @@
     
     function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
-    // שמירה - כולל שמירת שם היוצר
     function handleModalSave() {
         const name = document.getElementById('modal-name-input').value;
         const cat = document.getElementById('modal-category-input').value;
@@ -737,7 +741,7 @@
                 qty: 1, 
                 isBase: true,     
                 isStarred: false,
-                creator: currentUserInitial // הוספת האות של היוצר
+                creator: currentUserInitial 
             });
         }
         saveToDrive();
@@ -754,12 +758,14 @@
         }
     }
 
+    // ניקוי תכנון: מחיקת שיוך משתמש (creator) + הסרת בחירה
     function resetPlanningList() {
-        if(confirm('האם לנקות את הרשימה? (המוצרים יישמרו ב"קבועים")')) {
+        if(confirm('האם לנקות את הרשימה? (המוצרים יישמרו ב"קבועים", משתמש ינוקה)')) {
             products.forEach(p => {
                 p.isSelected = false;
                 p.isBought = false;
                 p.qty = 1;
+                p.creator = ''; // ניקוי המשתמש
             });
             saveToDrive();
             refreshView();
