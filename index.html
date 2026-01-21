@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 4.4</title>
+    <title>SuperList Pro 4.5</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -46,11 +46,15 @@
         .tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 0.9rem; }
         .tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); background: #f8faff; }
 
-        /* Search Bar Style */
-        .search-container { padding: 10px; background: #fff; border-bottom: 1px solid #eee; }
+        /* Search Bar & Collapse Button */
+        .search-row { display: flex; align-items: center; padding: 10px; background: #fff; border-bottom: 1px solid #eee; gap: 10px; }
+        .search-container { flex: 1; }
         #search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
         #search-input:focus { border-color: var(--primary-color); }
         
+        .collapse-btn { background: #f0f2f5; border: 1px solid #ddd; color: #555; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .collapse-btn:active { background: #e0e0e0; }
+
         .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; background: white; }
         .item:active { background-color: #f5f5f5; }
         .item-main { display: flex; align-items: center; flex: 1; cursor: pointer; gap: 12px; }
@@ -62,10 +66,7 @@
         .star-check { width: 28px; height: 28px; font-size: 26px; color: var(--star-inactive); display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
         .star-check.active { color: var(--star-color); text-shadow: 0 2px 5px rgba(241, 196, 15, 0.4); }
 
-        /* User Badge Style */
         .user-badge { font-size: 10px; background-color: #e0e0e0; color: #555; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: -5px; border: 1px solid #fff; }
-        
-        /* Base indicator in Planning List */
         .base-indicator { font-size: 14px; color: var(--star-color); margin-left: 4px; }
 
         .qty-control { display: flex; align-items: center; background: #f0f2f5; border-radius: 8px; padding: 2px; margin-left: 10px; }
@@ -89,7 +90,6 @@
         .btn-clear-bought { background-color: #ffebee; color: var(--danger-color); }
         .btn-reset-plan { background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
         .btn-add-base { background-color: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
-        .btn-factory-reset { background-color: #333; color: #fff; font-size: 12px; padding: 10px; margin-top: 20px; opacity: 0.8; }
 
         .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(2px); }
         .modal { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -145,8 +145,11 @@
             <div class="tab" onclick="switchTab('shopping')">🏃 קניה</div>
         </div>
         
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="🔍 חפש מוצר..." onkeyup="handleSearch(this.value)">
+        <div class="search-row">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="🔍 חפש מוצר..." onkeyup="handleSearch(this.value)">
+            </div>
+            <button class="collapse-btn" onclick="toggleCollapseAll()" title="כווץ/הרחב הכל">↕️</button>
         </div>
     </div>
 
@@ -168,10 +171,6 @@
             <div class="actions-bar">
                 <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
                     ♻️ נקה את התכנון (חדש שבוע)
-                </button>
-                
-                <button class="action-btn btn-factory-reset" onclick="forceFactoryReset()">
-                    ⚙️ טען מחדש נתוני ברירת מחדל (דריסת נתונים!)
                 </button>
             </div>
         </div>
@@ -235,6 +234,7 @@
     let driveFileId = null;
     let products = [];
     let categoryState = {}; 
+    let allCollapsed = false; // מצב גלובלי לכפתור הכיווץ
     let currentUserInitial = '';
     let searchTerm = '';
 
@@ -419,16 +419,7 @@
         if(driveFileId) loadFileContent();
     }
 
-    function forceFactoryReset() {
-        if(confirm('האם אתה בטוח? פעולה זו תמחק את כל הנתונים הנוכחיים ותטען את הרשימה המעודכנת מהקוד.')) {
-            products = initializeDefaultData();
-            saveToDrive();
-            refreshView();
-            alert('הנתונים אופסו בהצלחה לרשימת ברירת המחדל החדשה.');
-        }
-    }
-
-    // --- Search & View Logic ---
+    // --- Logic for Search, View, Collapse ---
     const CATEGORIES = [
         "ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", 
         "שימורים", "חטיפים וממתקים", "משקאות קלים", "אלכוהול", "ניקיון ובית", "כללי"
@@ -436,6 +427,14 @@
 
     function handleSearch(val) {
         searchTerm = val.toLowerCase();
+        refreshView();
+    }
+
+    function toggleCollapseAll() {
+        allCollapsed = !allCollapsed;
+        CATEGORIES.forEach(cat => {
+            categoryState[cat] = allCollapsed;
+        });
         refreshView();
     }
 
@@ -447,7 +446,6 @@
     }
 
     function switchTab(tab) {
-        // Reset search when switching tabs
         document.getElementById('search-input').value = '';
         searchTerm = '';
         
@@ -480,8 +478,8 @@
         const groups = {};
         CATEGORIES.forEach(c => groups[c] = []);
         
-        // Filter by search term
-        const filteredList = itemList.filter(p => p.name.toLowerCase().includes(searchTerm));
+        // Filter by search term if exists
+        const filteredList = searchTerm ? itemList.filter(p => p.name.toLowerCase().includes(searchTerm)) : itemList;
 
         filteredList.forEach(p => {
             const cat = p.category || 'כללי';
@@ -491,11 +489,15 @@
 
         CATEGORIES.forEach(cat => {
             if(groups[cat].length > 0) {
-                const isCollapsed = categoryState[cat];
+                // If searching, always expand relevant categories
+                const isCollapsed = searchTerm ? false : categoryState[cat];
                 const header = document.createElement('div');
                 header.className = 'category-header';
                 header.onclick = () => toggleCategory(cat);
-                header.innerHTML = `<span>${cat}</span><span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>`;
+                header.innerHTML = `
+                    <span>${cat}</span>
+                    <span class="arrow-icon ${isCollapsed ? 'closed' : ''}">▼</span>
+                `;
                 container.appendChild(header);
                 
                 const itemsDiv = document.createElement('div');
@@ -531,21 +533,29 @@
         });
     }
 
-    // 2. טאב תכנון
+    // 2. טאב תכנון - תיקון לוגיקה: מציג גם בסיסיים בחיפוש!
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
-        const planningItems = products.filter(p => p.isSelected);
+        
+        let listToRender;
+        if (searchTerm.length > 0) {
+            // בחיפוש: מציגים גם נבחרים וגם בסיסיים (כדי שיהיה אפשר להוסיף)
+            listToRender = products.filter(p => p.isSelected || p.isBase);
+        } else {
+            // רגיל: רק מה שנבחר
+            listToRender = products.filter(p => p.isSelected);
+        }
 
-        if(planningItems.length === 0 && searchTerm === '') {
+        if(listToRender.length === 0 && searchTerm === '') {
             container.innerHTML = '<div style="text-align:center; color:#999; margin-top:30px;">הרשימה ריקה.<br>הוסף ב"+" או ייבא מ"קבועים".</div>';
             return;
         }
 
-        renderGroupedList(container, planningItems, (p) => {
+        renderGroupedList(container, listToRender, (p) => {
             const creatorBadge = p.creator ? `<span class="user-badge">${p.creator}</span>` : '';
-            // כוכב צהוב אם זה מקבועים
-            const baseIndicator = p.isBase ? `<span class="base-indicator">★</span>` : '';
+            // כוכב צהוב רק אם זה מסומן כמועדף
+            const baseIndicator = p.isStarred ? `<span class="base-indicator">★</span>` : '';
 
             return `
                 <div class="item-main" onclick="toggleSelect(${p.id})">
@@ -579,14 +589,10 @@
         }
 
         const groups = {}; 
-        // Logic similar to grouped list but specific for shopping split view
-        // Using common renderer logic is tricky for split view, so keeping separate for now or refactoring if needed.
-        // Let's adapt grouped list logic for shopping view? No, shopping view is split in two.
         
-        // Render Active
-        const filteredActive = activeItems.filter(p => p.name.toLowerCase().includes(searchTerm));
+        // Active
+        const filteredActive = searchTerm ? activeItems.filter(p => p.name.toLowerCase().includes(searchTerm)) : activeItems;
         if(filteredActive.length > 0) {
-             // Use simple render for active
              filteredActive.forEach(p => {
                  const cat = p.category || 'כללי';
                  if(!groups[cat]) groups[cat] = [];
@@ -619,8 +625,8 @@
              });
         }
 
-        // Render Bought
-        const filteredBought = boughtItems.filter(p => p.name.toLowerCase().includes(searchTerm));
+        // Bought
+        const filteredBought = searchTerm ? boughtItems.filter(p => p.name.toLowerCase().includes(searchTerm)) : boughtItems;
         if (filteredBought.length > 0) {
             const cartHeader = document.createElement('div');
             cartHeader.className = 'category-header cart-header';
@@ -758,14 +764,13 @@
         }
     }
 
-    // ניקוי תכנון: מחיקת שיוך משתמש (creator) + הסרת בחירה
     function resetPlanningList() {
         if(confirm('האם לנקות את הרשימה? (המוצרים יישמרו ב"קבועים", משתמש ינוקה)')) {
             products.forEach(p => {
                 p.isSelected = false;
                 p.isBought = false;
                 p.qty = 1;
-                p.creator = ''; // ניקוי המשתמש
+                p.creator = ''; 
             });
             saveToDrive();
             refreshView();
