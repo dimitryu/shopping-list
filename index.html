@@ -3,16 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 4.1</title>
-	<link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SuperList">
-    <meta name="theme-color" content="#4285F4">
-	
+    <title>SuperList Pro 4.3 - Multi User</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -66,6 +57,22 @@
         .star-check { width: 28px; height: 28px; font-size: 26px; color: var(--star-inactive); display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
         .star-check.active { color: var(--star-color); text-shadow: 0 2px 5px rgba(241, 196, 15, 0.4); }
 
+        /* User Badge Style */
+        .user-badge {
+            font-size: 10px;
+            background-color: #e0e0e0;
+            color: #555;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: -5px; /* קצת חפיפה לשם */
+            border: 1px solid #fff;
+        }
+
         .qty-control { display: flex; align-items: center; background: #f0f2f5; border-radius: 8px; padding: 2px; margin-left: 10px; }
         .qty-btn { width: 26px; height: 26px; border: none; background: white; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .qty-input-manual { width: 40px; text-align: center; font-size: 14px; font-weight: 600; margin: 0 2px; border: none; background: transparent; outline: none; color: #333; font-family: inherit; }
@@ -90,6 +97,7 @@
         .btn-clear-bought { background-color: #ffebee; color: var(--danger-color); }
         .btn-reset-plan { background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
         .btn-add-base { background-color: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
+        .btn-factory-reset { background-color: #333; color: #fff; font-size: 12px; padding: 10px; margin-top: 20px; opacity: 0.8; }
 
         .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(2px); }
         .modal { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -103,6 +111,14 @@
 
         .status-bar { font-size: 11px; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 10px; color: white; white-space: nowrap; margin-right: auto;}
     </style>
+    
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SuperList">
+    <meta name="theme-color" content="#4285F4">
 </head>
 <body>
 
@@ -157,6 +173,10 @@
                 <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
                     ♻️ נקה את התכנון (חדש שבוע)
                 </button>
+                
+                <button class="action-btn btn-factory-reset" onclick="forceFactoryReset()">
+                    ⚙️ טען מחדש נתוני ברירת מחדל (דריסת נתונים!)
+                </button>
             </div>
         </div>
 
@@ -210,7 +230,8 @@
     // ==========================================
 
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    // הוספנו את ה-scope של userinfo.profile כדי לקבל את השם
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
     const FILE_NAME = 'superlist_data.json';
     
     let tokenClient;
@@ -219,6 +240,7 @@
     let driveFileId = null;
     let products = [];
     let categoryState = {}; 
+    let currentUserInitial = ''; // משתנה גלובלי לאות המשתמש
 
     function gapiLoaded() {
         gapi.load('client', async () => {
@@ -248,28 +270,31 @@
         }
     }
 
-//    function handleAuthClick() {
-//        tokenClient.callback = async (resp) => {
-//            if (resp.error) throw resp;
-//            showApp();
-//            await findOrCreateFile();
-//        };
-//        if (gapi.client.getToken() === null) {
-//            tokenClient.requestAccessToken({prompt: 'consent'});
-//       } else {
-//            tokenClient.requestAccessToken({prompt: ''});
-//        }
-//    }
-
-	function handleAuthClick() {
+    function handleAuthClick() {
         tokenClient.callback = async (resp) => {
             if (resp.error) throw resp;
+            
+            // --- שלב חדש: קבלת פרטי המשתמש ---
+            try {
+                const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { 'Authorization': `Bearer ${resp.access_token}` }
+                }).then(res => res.json());
+                
+                if (userInfo.given_name) {
+                    currentUserInitial = userInfo.given_name.charAt(0).toUpperCase();
+                    // אם זה עברית, לוקחים כמו שזה
+                }
+            } catch (error) {
+                console.error("Failed to fetch user info", error);
+            }
+            // ---------------------------------
+
             showApp();
             await findOrCreateFile();
         };
         tokenClient.requestAccessToken({prompt: ''});
     }
-	
+
     function handleSignoutClick() {
         const token = gapi.client.getToken();
         if (token !== null) {
@@ -280,6 +305,7 @@
             document.getElementById('signout-btn').classList.add('hidden');
             document.getElementById('status-msg').innerText = 'ממתין...';
             products = [];
+            currentUserInitial = '';
         }
     }
 
@@ -327,63 +353,23 @@
     }
 
     function initializeDefaultData() {
+        // רשימה בסיסית - ללא יוצר מוגדר
         const rawItems = [
             { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", fav: true },
             { n: "קוטג' 5%", c: "מוצרי חלב וביצים", fav: true },
             { n: "גבינה לבנה 5%", c: "מוצרי חלב וביצים", fav: true },
             { n: "גבינה צהובה עמק", c: "מוצרי חלב וביצים", fav: true },
             { n: "ביצים L (תבנית)", c: "מוצרי חלב וביצים", fav: true },
-            { n: "חמאה", c: "מוצרי חלב וביצים", fav: true },
-            { n: "מילקי", c: "מוצרי חלב וביצים", fav: true },
-            { n: "שמנת מתוקה", c: "מוצרי חלב וביצים", fav: true },
-            
             { n: "מלפפונים", c: "ירקות ופירות", fav: true },
             { n: "עגבניות", c: "ירקות ופירות", fav: true },
             { n: "בצל יבש", c: "ירקות ופירות", fav: true },
-            { n: "תפוחי אדמה", c: "ירקות ופירות", fav: true },
-            { n: "גזר", c: "ירקות ופירות", fav: false },
-            { n: "בננות", c: "ירקות ופירות", fav: true },
-            { n: "לימון", c: "ירקות ופירות", fav: true },
-            { n: "חסה", c: "ירקות ופירות", fav: false },
-            
             { n: "לחם פרוס", c: "לחם ומאפים", fav: true },
             { n: "פיתות", c: "לחם ומאפים", fav: true },
-            
-            { n: "קפה נמס (טייסטרס)", c: "מזווה ובישול", fav: true },
-            { n: "קפה שחור טורקי", c: "מזווה ובישול", fav: false },
+            { n: "קפה נמס", c: "מזווה ובישול", fav: true },
             { n: "סוכר", c: "מזווה ובישול", fav: true },
-            { n: "שמן קנולה/חמניות", c: "מזווה ובישול", fav: true },
-            { n: "שמן זית", c: "מזווה ובישול", fav: true },
-            { n: "פסטה", c: "מזווה ובישול", fav: true },
-            { n: "אורז", c: "מזווה ובישול", fav: true },
-            { n: "רסק עגבניות", c: "מזווה ובישול", fav: true },
-            { n: "חומוס אחלה/צבר", c: "שימורים", fav: true }, // העברתי לשימורים? לא, זה מקרר. אבל חומוס בקופסה? נשאיר מזווה או נעביר
-            { n: "טחינה גולמית", c: "מזווה ובישול", fav: false },
-            { n: "קורנפלקס", c: "מזווה ובישול", fav: true },
-
             { n: "שימורי טונה", c: "שימורים", fav: true },
-            { n: "מלפפון חמוץ", c: "שימורים", fav: true },
-            { n: "תירס שימורים", c: "שימורים", fav: true },
-
             { n: "במבה", c: "חטיפים וממתקים", fav: true },
-            { n: "ביסלי", c: "חטיפים וממתקים", fav: false },
-            { n: "שוקולד פרה", c: "חטיפים וממתקים", fav: true },
-
-            { n: "קולה זירו", c: "משקאות קלים", fav: true },
-            { n: "מים מינרלים", c: "משקאות קלים", fav: true },
-            { n: "מיץ תפוזים", c: "משקאות קלים", fav: false },
-
-            { n: "יין אדום", c: "אלכוהול", fav: false },
-            { n: "שישיית בירה", c: "אלכוהול", fav: false },
-
-            { n: "נייר טואלט", c: "ניקיון ובית", fav: true },
-            { n: "מגבות נייר", c: "ניקיון ובית", fav: true },
-            { n: "נוזל כלים", c: "ניקיון ובית", fav: true },
-            { n: "שקיות זבל", c: "ניקיון ובית", fav: false },
-            { n: "שמפו", c: "ניקיון ובית", fav: false },
-            
-            { n: "חזה עוף / שניצל", c: "בשר ודגים", fav: false },
-            { n: "בשר טחון", c: "בשר ודגים", fav: false }
+            { n: "קולה זירו", c: "משקאות קלים", fav: true }
         ];
 
         return rawItems.map((item, index) => ({
@@ -394,7 +380,8 @@
             isStarred: item.fav, 
             isSelected: false, 
             isBought: false,
-            qty: 1
+            qty: 1,
+            creator: '' // למוצרי מערכת אין יוצר
         }));
     }
 
@@ -409,8 +396,8 @@
                 if(!p.qty) p.qty = 1; 
                 if(p.isBase === undefined) p.isBase = true;
                 if(p.isStarred === undefined) p.isStarred = false; 
+                // אין צורך לאתחל creator, אם אין זה undefined
             });
-
             refreshView();
             document.getElementById('status-msg').innerText = 'מעודכן ✅';
         } catch (err) {
@@ -439,6 +426,15 @@
 
     function syncNow() {
         if(driveFileId) loadFileContent();
+    }
+
+    function forceFactoryReset() {
+        if(confirm('האם אתה בטוח? פעולה זו תמחק את כל הנתונים הנוכחיים ותטען את הרשימה המעודכנת מהקוד.')) {
+            products = initializeDefaultData();
+            saveToDrive();
+            refreshView();
+            alert('הנתונים אופסו בהצלחה לרשימת ברירת המחדל החדשה.');
+        }
     }
 
     // --- App Logic ---
@@ -518,7 +514,7 @@
         });
     }
 
-    // 1. טאב קבועים - מציג הכל (isBase=true)
+    // 1. טאב קבועים
     function renderBaseList() {
         const container = document.getElementById('base-list-container');
         container.innerHTML = '';
@@ -535,11 +531,10 @@
         });
     }
 
-    // 2. טאב תכנון - מציג את מה שנבחר (isSelected)
+    // 2. טאב תכנון - הוספנו את תצוגת האות
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
-        
         const planningItems = products.filter(p => p.isSelected);
 
         if(planningItems.length === 0) {
@@ -548,9 +543,13 @@
         }
 
         renderGroupedList(container, planningItems, (p) => {
+            // אם יש יוצר (creator) - נציג אותו
+            const creatorBadge = p.creator ? `<span class="user-badge">${p.creator}</span>` : '';
+
             return `
                 <div class="item-main" onclick="toggleSelect(${p.id})">
                     <div class="checkbox ${p.isSelected ? 'checked' : ''}"></div>
+                    ${creatorBadge}
                     <span>${p.name}</span>
                 </div>
                 <div style="display:flex; align-items:center;">
@@ -569,7 +568,6 @@
     function renderShoppingList() {
         const container = document.getElementById('shopping-list-container');
         container.innerHTML = '';
-        
         let activeItems = products.filter(p => p.isSelected && !p.isBought);
         let boughtItems = products.filter(p => p.isSelected && p.isBought);
         
@@ -715,6 +713,7 @@
     
     function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
+    // שמירה - כולל שמירת שם היוצר
     function handleModalSave() {
         const name = document.getElementById('modal-name-input').value;
         const cat = document.getElementById('modal-category-input').value;
@@ -726,9 +725,6 @@
         } else {
             if(products.some(x => x.name === name)) { alert('המוצר קיים'); return; }
             
-            // הוספה: תמיד קבוע (isBase=true), תמיד בלי כוכב (isStarred=false).
-            // אם אנחנו בטאב תכנון/קניה -> נסמן ב-V.
-            // אם בטאב קבועים -> לא נסמן ב-V.
             const activeTab = document.querySelector('.tab.active').innerText;
             const selectForPlan = !activeTab.includes('קבועים');
 
@@ -740,7 +736,8 @@
                 isBought: false, 
                 qty: 1, 
                 isBase: true,     
-                isStarred: false  
+                isStarred: false,
+                creator: currentUserInitial // הוספת האות של היוצר
             });
         }
         saveToDrive();
@@ -757,7 +754,6 @@
         }
     }
 
-    // ניקוי תכנון: משאיר במאגר (isBase=true) אבל מסיר בחירה (isSelected=false)
     function resetPlanningList() {
         if(confirm('האם לנקות את הרשימה? (המוצרים יישמרו ב"קבועים")')) {
             products.forEach(p => {
@@ -790,5 +786,3 @@
 </script>
 </body>
 </html>
-
-
