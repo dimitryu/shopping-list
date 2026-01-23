@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 4.5</title>
+    <title>SuperList Pro 4.6 - Sync Fix</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -90,6 +90,7 @@
         .btn-clear-bought { background-color: #ffebee; color: var(--danger-color); }
         .btn-reset-plan { background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
         .btn-add-base { background-color: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
+        .btn-id-copy { background-color: #607d8b; color: white; font-size: 13px; padding: 10px; opacity: 0.9; margin-top: 10px; }
 
         .modal-overlay { position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(2px); }
         .modal { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -172,6 +173,10 @@
                 <button class="action-btn btn-reset-plan" onclick="resetPlanningList()">
                     ♻️ נקה את התכנון (חדש שבוע)
                 </button>
+                
+                <button class="action-btn btn-id-copy" onclick="copyFileId()">
+                    🆔 העתק מזהה רשימה (לשיתוף עם אחרים)
+                </button>
             </div>
         </div>
 
@@ -223,6 +228,9 @@
     const CLIENT_ID = '259426164274-8vbv26e89kerdjv4q4gc612rht8sqng9.apps.googleusercontent.com'; // להחליף
     const API_KEY = 'AIzaSyB9PVroJWU0ynWjfVMa_0iWYZWd0JLTboM'; // להחליף
     // ==========================================
+    // כאן מדביקים את ה-ID אחרי שהעתקת אותו (רק למשתמשים המשניים)
+    const MANUAL_FILE_ID = ''; 
+    // ==========================================
 
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
@@ -234,7 +242,7 @@
     let driveFileId = null;
     let products = [];
     let categoryState = {}; 
-    let allCollapsed = false; // מצב גלובלי לכפתור הכיווץ
+    let allCollapsed = false;
     let currentUserInitial = '';
     let searchTerm = '';
 
@@ -303,6 +311,14 @@
 
     async function findOrCreateFile() {
         document.getElementById('status-msg').innerText = 'מסנכרן...';
+        
+        // תיקון סנכרון: אם יש ID ידני - השתמש בו ישירות
+        if (MANUAL_FILE_ID && MANUAL_FILE_ID.length > 5) {
+            driveFileId = MANUAL_FILE_ID;
+            await loadFileContent();
+            return;
+        }
+
         try {
             const response = await gapi.client.drive.files.list({
                 q: `name = '${FILE_NAME}' and trashed = false`,
@@ -419,7 +435,17 @@
         if(driveFileId) loadFileContent();
     }
 
-    // --- Logic for Search, View, Collapse ---
+    function copyFileId() {
+        if (driveFileId) {
+            navigator.clipboard.writeText(driveFileId).then(() => {
+                alert('המזהה הועתק ללוח: ' + driveFileId + '\nהדבק אותו בקוד במשתנה MANUAL_FILE_ID אצל משתמשים אחרים.');
+            });
+        } else {
+            alert('טרם נטען קובץ.');
+        }
+    }
+
+    // --- Search & View Logic ---
     const CATEGORIES = [
         "ירקות ופירות", "מוצרי חלב וביצים", "לחם ומאפים", "בשר ודגים", "מזווה ובישול", 
         "שימורים", "חטיפים וממתקים", "משקאות קלים", "אלכוהול", "ניקיון ובית", "כללי"
@@ -478,7 +504,6 @@
         const groups = {};
         CATEGORIES.forEach(c => groups[c] = []);
         
-        // Filter by search term if exists
         const filteredList = searchTerm ? itemList.filter(p => p.name.toLowerCase().includes(searchTerm)) : itemList;
 
         filteredList.forEach(p => {
@@ -489,7 +514,6 @@
 
         CATEGORIES.forEach(cat => {
             if(groups[cat].length > 0) {
-                // If searching, always expand relevant categories
                 const isCollapsed = searchTerm ? false : categoryState[cat];
                 const header = document.createElement('div');
                 header.className = 'category-header';
@@ -533,14 +557,14 @@
         });
     }
 
-    // 2. טאב תכנון - תיקון לוגיקה: מציג גם בסיסיים בחיפוש!
+    // 2. טאב תכנון
     function renderCatalog() {
         const container = document.getElementById('catalog-list-container');
         container.innerHTML = '';
         
         let listToRender;
         if (searchTerm.length > 0) {
-            // בחיפוש: מציגים גם נבחרים וגם בסיסיים (כדי שיהיה אפשר להוסיף)
+            // בחיפוש: מציגים הכל כדי לאפשר בחירה מקבועים
             listToRender = products.filter(p => p.isSelected || p.isBase);
         } else {
             // רגיל: רק מה שנבחר
@@ -590,7 +614,6 @@
 
         const groups = {}; 
         
-        // Active
         const filteredActive = searchTerm ? activeItems.filter(p => p.name.toLowerCase().includes(searchTerm)) : activeItems;
         if(filteredActive.length > 0) {
              filteredActive.forEach(p => {
@@ -660,7 +683,21 @@
 
     function toggleSelect(id) {
         const p = products.find(x => x.id === id);
-        if(p) { p.isSelected = !p.isSelected; if(!p.isSelected) p.isBought = false; saveToDrive(); refreshView(); }
+        if(p) { 
+            p.isSelected = !p.isSelected; 
+            if(!p.isSelected) p.isBought = false; 
+            
+            // אם סימנו ב-V (הוספנו לתכנון) - נעדכן את היוצר למי שעשה את הפעולה
+            if(p.isSelected) {
+                p.creator = currentUserInitial;
+            } else {
+                // אם הורדנו V (הסרנו מתכנון) - נמחק את היוצר (נשאר רק במאגר)
+                p.creator = '';
+            }
+            
+            saveToDrive(); 
+            refreshView(); 
+        }
     }
 
     function addBaseToPlan() {
@@ -746,8 +783,8 @@
                 isBought: false, 
                 qty: 1, 
                 isBase: true,     
-                isStarred: false,
-                creator: currentUserInitial 
+                isStarred: false, // לא מקבל כוכב אוטומטית בהוספה
+                creator: selectForPlan ? currentUserInitial : '' 
             });
         }
         saveToDrive();
