@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperList Pro 4.7</title>
+    <title>SuperList Pro 4.8</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -54,38 +54,49 @@
         .collapse-btn { background: #f0f2f5; border: 1px solid #ddd; color: #555; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
         .collapse-btn:active { background: #e0e0e0; }
 
-        .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; background: white; }
+        .item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; background: white; }
         .item:active { background-color: #f5f5f5; }
-        .item-main { display: flex; align-items: center; flex: 1; cursor: pointer; gap: 12px; }
+        .item-main { display: flex; align-items: center; flex: 1; cursor: pointer; gap: 8px; overflow: hidden; }
+        .item-main span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         .checkbox { width: 22px; height: 22px; border: 2px solid #ddd; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; }
         .checkbox.checked { background-color: var(--success-color); border-color: var(--success-color); }
         .checkbox.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
         
-        .star-check { width: 28px; height: 28px; font-size: 26px; color: var(--star-inactive); display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
+        .star-check { width: 28px; height: 28px; font-size: 26px; color: var(--star-inactive); display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; flex-shrink: 0; }
         .star-check.active { color: var(--star-color); text-shadow: 0 2px 5px rgba(241, 196, 15, 0.4); }
 
-        .user-badge { font-size: 10px; background-color: #e0e0e0; color: #555; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: -5px; border: 1px solid #fff; }
-        .base-indicator { font-size: 14px; color: var(--star-color); margin-left: 4px; }
+        .user-badge { font-size: 9px; background-color: #e0e0e0; color: #555; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: -4px; border: 1px solid #fff; flex-shrink: 0; }
+        .base-indicator { font-size: 12px; color: var(--star-color); margin-left: 2px; flex-shrink: 0; }
 
-        .qty-control { display: flex; align-items: center; background: #f0f2f5; border-radius: 8px; padding: 2px; margin-left: 10px; }
-        .qty-btn { width: 26px; height: 26px; border: none; background: white; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .qty-input-manual { width: 40px; text-align: center; font-size: 14px; font-weight: 600; margin: 0 2px; border: none; background: transparent; outline: none; color: #333; font-family: inherit; }
+        /* Compact Quantity Control */
+        .qty-control { 
+            display: flex; align-items: center; background: #f0f2f5; border-radius: 6px; 
+            padding: 1px; margin-left: 6px; flex-shrink: 0; 
+        }
+        .qty-btn { 
+            width: 22px; height: 22px; border: none; background: white; border-radius: 4px; 
+            cursor: pointer; color: var(--primary-color); font-weight: bold; font-size: 14px; 
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 1px rgba(0,0,0,0.05); 
+        }
+        .qty-input-manual { 
+            width: 26px; text-align: center; font-size: 13px; font-weight: 600; 
+            margin: 0 1px; border: none; background: transparent; outline: none; color: #333; font-family: inherit; padding: 0;
+        }
         
         .item.bought { background-color: #fafafa; }
         .item.bought span { text-decoration: line-through; color: #aaa; }
         .item.bought .checkbox { background-color: #ddd; border-color: #ddd; }
         .item.bought .qty-control { opacity: 0.5; pointer-events: none; }
 
-        .category-header { background-color: #e8f0fe; color: var(--primary-color); padding: 10px 12px; margin-top: 15px; margin-bottom: 5px; border-radius: 8px; font-weight: bold; font-size: 0.95em; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .category-header { background-color: #e8f0fe; color: var(--primary-color); padding: 8px 12px; margin-top: 10px; margin-bottom: 2px; border-radius: 6px; font-weight: bold; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
         .category-header:hover { background-color: #dbe8fc; }
         .arrow-icon { transition: transform 0.2s; font-size: 0.8em; }
         .arrow-icon.closed { transform: rotate(90deg); }
         .category-items-container.closed { display: none; }
         .cart-header { background-color: var(--cart-header-bg); color: #555; }
 
-        /* Image Button Style */
-        .img-btn { border: none; background: none; cursor: pointer; font-size: 16px; margin-right: 5px; opacity: 0.7; transition: 0.2s; }
+        .img-btn { border: none; background: none; cursor: pointer; font-size: 15px; margin-right: 2px; opacity: 0.7; transition: 0.2s; padding: 2px; }
         .img-btn:hover { opacity: 1; transform: scale(1.1); }
 
         .actions-bar { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;}
@@ -359,12 +370,18 @@
         const rawItems = [
             { n: "חלב תנובה 3%", c: "מוצרי חלב וביצים", fav: true },
             { n: "קוטג' 5%", c: "מוצרי חלב וביצים", fav: true },
+            { n: "גבינה לבנה 5%", c: "מוצרי חלב וביצים", fav: true },
+            { n: "גבינה צהובה עמק", c: "מוצרי חלב וביצים", fav: true },
             { n: "ביצים L (תבנית)", c: "מוצרי חלב וביצים", fav: true },
             { n: "מלפפונים", c: "ירקות ופירות", fav: true },
             { n: "עגבניות", c: "ירקות ופירות", fav: true },
+            { n: "בצל יבש", c: "ירקות ופירות", fav: true },
             { n: "לחם פרוס", c: "לחם ומאפים", fav: true },
+            { n: "פיתות", c: "לחם ומאפים", fav: true },
             { n: "קפה נמס", c: "מזווה ובישול", fav: true },
-            { n: "שימורי טונה", c: "שימורים", fav: true }
+            { n: "שימורי טונה", c: "שימורים", fav: true },
+            { n: "במבה", c: "חטיפים וממתקים", fav: true },
+            { n: "קולה זירו", c: "משקאות קלים", fav: true }
         ];
         return rawItems.map((item, index) => ({
             id: Date.now() + index,
@@ -426,9 +443,9 @@
         } else { alert('אין קובץ.'); }
     }
 
-    // --- Image Search Function ---
     function openImageSearch(term) {
-        window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(term), '_blank');
+        // הוספת מילות מפתח כדי למצוא מוצר בסופר
+        window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(term + ' מוצר בסופר'), '_blank');
     }
 
     // --- Search & View Logic ---
@@ -585,7 +602,7 @@
         });
     }
 
-    // 3. טאב קניות - שדרוג עם קטגוריות מתקפלות
+    // 3. טאב קניות
     function renderShoppingList() {
         const container = document.getElementById('shopping-list-container');
         container.innerHTML = '';
@@ -598,10 +615,8 @@
         }
 
         const groups = {}; 
-        
         const filteredActive = searchTerm ? activeItems.filter(p => p.name.toLowerCase().includes(searchTerm)) : activeItems;
         
-        // בניית הקבוצות עבור הרשימה הפעילה
         if(filteredActive.length > 0) {
              filteredActive.forEach(p => {
                  const cat = p.category || 'כללי';
@@ -609,7 +624,6 @@
                  groups[cat].push(p);
              });
              
-             // שימוש בלוגיקה של כותרות מתקפלות גם כאן
              CATEGORIES.forEach(cat => {
                 if(groups[cat] && groups[cat].length > 0) {
                     const isCollapsed = searchTerm ? false : categoryState[cat];
@@ -648,7 +662,6 @@
              });
         }
 
-        // Bought Items
         const filteredBought = searchTerm ? boughtItems.filter(p => p.name.toLowerCase().includes(searchTerm)) : boughtItems;
         if (filteredBought.length > 0) {
             const cartHeader = document.createElement('div');
@@ -776,7 +789,7 @@
                 isBought: false, 
                 qty: 1, 
                 isBase: true,     
-                isStarred: false,
+                isStarred: false, 
                 creator: selectForPlan ? currentUserInitial : '' 
             });
         }
